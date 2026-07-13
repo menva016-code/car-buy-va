@@ -2,31 +2,44 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]   # или master, если ваша основная ветка так называется
+    branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout репозитория
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Установка Node.js
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Установка зависимостей
+      - name: Install dependencies
         run: npm ci
 
-      - name: Сборка проекта
+      - name: Build
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Публикация на GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write      # разрешение на публикацию страниц
+      id-token: write   # разрешение на OIDC (безопасная аутентификация)
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
