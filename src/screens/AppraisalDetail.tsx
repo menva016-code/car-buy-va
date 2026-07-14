@@ -42,6 +42,7 @@ interface LightboxState { urls: string[]; captions: string[]; index: number; }
 
 function Lightbox({ state, onClose }: { state: LightboxState; onClose: () => void }) {
   const [index, setIndex] = useState(state.index);
+  const [sendingApproval, setSendingApproval] = useState(false);
   const canPrev = index > 0, canNext = index < state.urls.length - 1;
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -166,6 +167,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
   const [editSection, setEditSection] = useState<EditSection | null>(null);
   const [editData, setEditData] = useState<Appraisal | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sendingApproval, setSendingApproval] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // edit UI state
@@ -214,6 +216,38 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     setUrlsBySlot(slots);
     setLoading(false);
   }, [appraisalId]);
+  
+  const sendToApproval = async () => {
+  if (!appraisal) return;
+
+  try {
+    setSendingApproval(true);
+
+    const photos = Object.values(urlsBySlot).flat();
+
+    const { error } = await supabase.functions.invoke("send-approval", {
+      body: {
+        appraisal,
+        photos
+      }
+    });
+
+    if (error) throw error;
+
+    alert("Автомобиль успешно отправлен на согласование.");
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Ошибка при отправке в Telegram.");
+
+  } finally {
+
+    setSendingApproval(false);
+
+  }
+};
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -401,7 +435,28 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
       <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-            <button onClick={onBack} className={`w-9 h-9 flex items-center justify-center rounded-xl ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}><ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} /></button>
+            <button
+  type="button"
+  onClick={handleSendApproval}
+  disabled={
+    sendingApproval ||
+    appraisal?.approval_status === "sent"
+  }
+  className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all ${
+    isDark
+      ? "bg-blue-900/30 border border-blue-700/60 text-blue-400"
+      : "bg-blue-50 border border-blue-200 text-blue-600"
+  }`}
+>
+  <Send className="w-4 h-4" />
+
+  {sendingApproval
+    ? "Отправка..."
+    : appraisal?.approval_status === "sent"
+      ? "✓ Отправлено"
+      : "Отправить на согласование"}
+
+</button>
           </div>
         </div>
         <div className="px-4 py-4 max-w-md mx-auto space-y-3">
@@ -412,6 +467,39 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
   }
 
   if (!appraisal) {
+	  
+	const handleSendApproval = async () => {
+  if (!appraisal) return;
+
+  try {
+    setSendingApproval(true);
+
+    const { error } = await supabase.functions.invoke(
+      "send-approval",
+      {
+        body: {
+          appraisalId: appraisal.id,
+        },
+      }
+    );
+
+    if (error) throw error;
+
+    alert("Автомобиль успешно отправлен на согласование.");
+
+    fetchData();
+
+  } catch (err: any) {
+
+    alert(err.message ?? "Ошибка отправки");
+
+  } finally {
+
+    setSendingApproval(false);
+
+  }
+};  
+	  
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         <div className="text-center px-6">
@@ -813,12 +901,22 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           </div>
 
           {/* Approval button */}
-          <button type="button"
-            className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all ${isDark ? 'bg-blue-900/30 border border-blue-700/60 text-blue-400' : 'bg-blue-50 border border-blue-200 text-blue-600'}`}
-            disabled>
-            <Send className="w-4 h-4" />
-            Отправить на согласование
-          </button>
+        <button
+			type="button"
+			onClick={sendToApproval}
+			disabled={sendingApproval}
+			className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all ${
+				isDark
+					? "bg-blue-900/30 border border-blue-700/60 text-blue-400 hover:bg-blue-900/50"
+					: "bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100"
+			} ${sendingApproval ? "opacity-60 cursor-not-allowed" : ""}`}
+		>
+			<Send className="w-4 h-4" />
+
+			{sendingApproval
+				? "Отправка..."
+				: "Отправить на согласование"}
+		</button>
 
           {renderPurchaseSection()}
           {renderOwnerSection()}
