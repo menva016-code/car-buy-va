@@ -459,18 +459,45 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
   function getAppraisalMissingData(): string[] {
     if (!appraisal) return [];
     const missing: string[] = [];
+    // Vehicle data
     if (!appraisal.make) missing.push('Марка автомобиля');
     if (!appraisal.model) missing.push('Модель автомобиля');
     if (!appraisal.year) missing.push('Год выпуска');
-    if (!appraisal.mileage) missing.push('Пробег');
+    if (!appraisal.mileage && appraisal.mileage !== 0) missing.push('Пробег');
     if (!appraisal.vin && !appraisal.license_plate) missing.push('VIN или гос. номер');
+    if (!appraisal.engine_volume) missing.push('Объём двигателя');
+    if (!appraisal.power_hp) missing.push('Мощность');
+    if (!appraisal.transmission) missing.push('Коробка передач');
+    if (!appraisal.drive_type) missing.push('Привод');
+    if (!appraisal.fuel_type) missing.push('Тип топлива');
+    // Prices
     if (!appraisal.owner_price) missing.push('Цена владельца');
     if (!appraisal.purchase_price) missing.push('Цена выкупа');
+    // Owner data
     if (!appraisal.owner_name) missing.push('Имя владельца');
     if (!appraisal.owner_phone) missing.push('Телефон владельца');
-    const exteriorSlots = ['front', 'left', 'rear', 'right'];
-    const hasExterior = exteriorSlots.some(s => (urlsBySlot[s]?.length ?? 0) > 0);
-    if (!hasExterior) missing.push('Фото кузова (снаружи)');
+    if (!appraisal.owner_city) missing.push('Город проживания');
+    if (!appraisal.deal_timeline) missing.push('Сроки сделки');
+    // Condition
+    if (!appraisal.car_condition_comment) missing.push('Комментарий по состоянию');
+    if (!appraisal.interior_comment) missing.push('Комментарий по салону');
+    // Photos — check each exterior slot individually
+    const photoSlotLabels: Record<string, string> = {
+      front: 'Фото: передняя часть',
+      left: 'Фото: левый бок',
+      rear: 'Фото: задняя часть',
+      right: 'Фото: правый бок',
+      front_light_left: 'Фото: передняя фара левая',
+      front_light_right: 'Фото: передняя фара правая',
+      rear_light_left: 'Фото: задняя фара левая',
+      rear_light_right: 'Фото: задняя фара правая',
+      interior: 'Фото салона',
+      dashboard: 'Фото приборной панели',
+      seats: 'Фото сидений',
+    };
+    for (const [slot, label] of Object.entries(photoSlotLabels)) {
+      if (!(urlsBySlot[slot]?.length)) missing.push(label);
+    }
     if (!urlsBySlot['sts']?.length && !appraisal.sts_photo_url) missing.push('Фото СТС');
     return missing;
   }
