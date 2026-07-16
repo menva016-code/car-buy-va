@@ -491,6 +491,14 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
       front_light_right: 'Фото: передняя фара правая',
       rear_light_left: 'Фото: задняя фара левая',
       rear_light_right: 'Фото: задняя фара правая',
+      hood_general: 'Фото: подкапотное пространство (общее)',
+      hood_cup_left: 'Фото: левый стакан',
+      hood_cup_right: 'Фото: правый стакан',
+      hood_longeron_left: 'Фото: левый лонжерон',
+      hood_longeron_right: 'Фото: правый лонжерон',
+      hood_extra: 'Дополнительные фото подкапотного пространства',
+      hood_defects: 'Фото дефектов подкапотного пространства',
+      vin_plates: 'Фото плашек с VIN',
       interior: 'Фото салона',
       dashboard: 'Фото приборной панели',
       seats: 'Фото сидений',
@@ -558,6 +566,17 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
 
   const cardCls = `${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm p-4`;
   const divCls = `border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`;
+
+  function hoodSlotLabel(slot: string): string {
+    const labels: Record<string, string> = {
+      hood_general: 'Общее фото',
+      hood_cup_left: 'Левый стакан',
+      hood_cup_right: 'Правый стакан',
+      hood_longeron_left: 'Левый лонжерон',
+      hood_longeron_right: 'Правый лонжерон',
+    };
+    return labels[slot] ?? 'Добавить';
+  }
   const inputCls = `w-full rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-brand-400 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-ink placeholder-gray-400'}`;
 
   if (loading) {
@@ -1387,6 +1406,106 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                       <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('body_defects', f, true)); e.target.value = ''; }} />
                         {uploadingPhoto === 'body_defects' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Underhood — main photos */}
+            {((['hood_general','hood_cup_left','hood_cup_right','hood_longeron_left','hood_longeron_right'] as const).some(s => urlsBySlot[s]?.length) || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Подкапотное пространство — основные фото</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                    {(['hood_general','hood_cup_left','hood_cup_right','hood_longeron_left','hood_longeron_right'] as const).map(slot => (
+                      <div key={slot}>
+                        {(urlsBySlot[slot] ?? []).map(url => (
+                          <div key={url} className="relative aspect-[4/3] mb-2">
+                            <PhotoTile url={url} caption={{hood_general:'Общее фото',hood_cup_left:'Левый стакан',hood_cup_right:'Правый стакан',hood_longeron_left:'Левый лонжерон',hood_longeron_right:'Правый лонжерон'}[slot]} onClick={() => { const all = ['hood_general','hood_cup_left','hood_cup_right','hood_longeron_left','hood_longeron_right'].flatMap(s => urlsBySlot[s]??[]); openLightbox(all, ['hood_general','hood_cup_left','hood_cup_right','hood_longeron_left','hood_longeron_right'].flatMap(s => (urlsBySlot[s]??[]).map(()=>({hood_general:'Общее фото',hood_cup_left:'Левый стакан',hood_cup_right:'Правый стакан',hood_longeron_left:'Левый лонжерон',hood_longeron_right:'Правый лонжерон'}[s]!))), all.indexOf(url)); }} />
+                            {editingPhotos && <button type="button" onClick={() => handleDeletePhoto(slot, url)} className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5 text-white" /></button>}
+                          </div>
+                        ))}
+                        {editingPhotos && !(urlsBySlot[slot]?.length) && (
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
+                            <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            <span className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{hoodSlotLabel(slot)}</span>
+                          </label>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Underhood — extra photos */}
+            {((urlsBySlot['hood_extra']?.length ?? 0) > 0 || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Подкапотное пространство — дополнительные фото</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
+                    {(urlsBySlot['hood_extra'] ?? []).map((url, i) => (
+                      <div key={url} className="relative aspect-square">
+                        <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['hood_extra']??[], (urlsBySlot['hood_extra']??[]).map((_,j)=>`Фото ${j+1}`), i)} />
+                        {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('hood_extra', url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
+                      </div>
+                    ))}
+                    {editingPhotos && (
+                      <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
+                        <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('hood_extra', f, true)); e.target.value = ''; }} />
+                        {uploadingPhoto === 'hood_extra' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Underhood — defects */}
+            {((urlsBySlot['hood_defects']?.length ?? 0) > 0 || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Подкапотное пространство — дефекты</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
+                    {(urlsBySlot['hood_defects'] ?? []).map((url, i) => (
+                      <div key={url} className="relative aspect-square">
+                        <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['hood_defects']??[], (urlsBySlot['hood_defects']??[]).map((_,j)=>`Дефект ${j+1}`), i)} />
+                        {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('hood_defects', url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
+                      </div>
+                    ))}
+                    {editingPhotos && (
+                      <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
+                        <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('hood_defects', f, true)); e.target.value = ''; }} />
+                        {uploadingPhoto === 'hood_defects' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* VIN plates */}
+            {((urlsBySlot['vin_plates']?.length ?? 0) > 0 || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Плашки с VIN</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
+                    {(urlsBySlot['vin_plates'] ?? []).map((url, i) => (
+                      <div key={url} className="relative aspect-square">
+                        <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['vin_plates']??[], (urlsBySlot['vin_plates']??[]).map((_,j)=>`Плашка ${j+1}`), i)} />
+                        {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('vin_plates', url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
+                      </div>
+                    ))}
+                    {editingPhotos && (
+                      <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
+                        <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('vin_plates', f, true)); e.target.value = ''; }} />
+                        {uploadingPhoto === 'vin_plates' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                         <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
                       </label>
                     )}

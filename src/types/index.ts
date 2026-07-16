@@ -109,6 +109,11 @@ export type SinglePhotoSlot =
   | 'tire_specs'
   | 'tire_date'
   | 'windshield'
+  | 'hood_general'
+  | 'hood_cup_left'
+  | 'hood_cup_right'
+  | 'hood_longeron_left'
+  | 'hood_longeron_right'
   | 'interior_driver'
   | 'interior_left_pass'
   | 'interior_right_rear'
@@ -116,7 +121,7 @@ export type SinglePhotoSlot =
   | 'interior_dashboard'
   | 'interior_console';
 
-export type MultiPhotoSlot = 'body_extra' | 'body_defects' | 'interior_extras' | 'interior_defects';
+export type MultiPhotoSlot = 'body_extra' | 'body_defects' | 'hood_extra' | 'hood_defects' | 'vin_plates' | 'interior_extras' | 'interior_defects';
 
 export type InteriorSingleSlot =
   | 'interior_driver'
@@ -167,10 +172,18 @@ export const INITIAL_PHOTOS: PhotoState = {
     tire_specs: null,
     tire_date: null,
     windshield: null,
+    hood_general: null,
+    hood_cup_left: null,
+    hood_cup_right: null,
+    hood_longeron_left: null,
+    hood_longeron_right: null,
   },
   multi: {
     body_extra: [],
     body_defects: [],
+    hood_extra: [],
+    hood_defects: [],
+    vin_plates: [],
   },
 };
 

@@ -489,6 +489,57 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }
             </div>
           </Section>
 
+          {/* Underhood */}
+          <Section title="Подкапотное пространство" icon={<Zap className="w-3.5 h-3.5 text-white" />}>
+            <SubLabel text="Основные фото" />
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mb-4">
+              <SinglePhotoCard slot="hood_general" file={photos.single.hood_general} label="Общее фото" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="hood_cup_left" file={photos.single.hood_cup_left} label="Левый стакан" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="hood_cup_right" file={photos.single.hood_cup_right} label="Правый стакан" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="hood_longeron_left" file={photos.single.hood_longeron_left} label="Левый лонжерон" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="hood_longeron_right" file={photos.single.hood_longeron_right} label="Правый лонжерон" onSelect={setSingle} onRemove={removeSingle} />
+            </div>
+            <SubLabel text="Дополнительные фото" />
+            <MultiPhotoGrid
+              slot="hood_extra"
+              files={photos.multi.hood_extra}
+              onAdd={addMulti}
+              onRemove={removeMulti}
+            />
+            {photos.multi.hood_extra.length === 0 && (
+              <p className={`text-[12px] mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                Добавьте дополнительные фото подкапотного пространства
+              </p>
+            )}
+            <SubLabel text="Фото дефектов" />
+            <MultiPhotoGrid
+              slot="hood_defects"
+              files={photos.multi.hood_defects}
+              onAdd={addMulti}
+              onRemove={removeMulti}
+            />
+            {photos.multi.hood_defects.length === 0 && (
+              <p className={`text-[12px] mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                Добавьте фото дефектов подкапотного пространства
+              </p>
+            )}
+          </Section>
+
+          {/* VIN plates */}
+          <Section title="Плашки с VIN" icon={<FileText className="w-3.5 h-3.5 text-white" />}>
+            <MultiPhotoGrid
+              slot="vin_plates"
+              files={photos.multi.vin_plates}
+              onAdd={addMulti}
+              onRemove={removeMulti}
+            />
+            {photos.multi.vin_plates.length === 0 && (
+              <p className={`text-[12px] mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                Добавьте фотографии всех плашек с VIN-номером
+              </p>
+            )}
+          </Section>
+
           {/* Additional body photos */}
           <Section title="Дополнительные фото кузова" icon={<Layers className="w-3.5 h-3.5 text-white" />}>
             <MultiPhotoGrid
