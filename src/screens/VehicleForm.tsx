@@ -158,7 +158,7 @@ function ToggleGroup<T extends string>({ value, options, onChange }: ToggleGroup
     <div className={`flex rounded-xl p-1 gap-1 ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
       {options.map(opt => (
         <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
-          className={`flex-1 py-2 px-1 rounded-lg text-[13px] font-medium transition-all duration-200 ${value === opt.value ? isDark ? 'bg-gray-600 text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm' : isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          className={`flex-1 py-2 px-1 rounded-lg text-[13px] font-medium transition-all duration-200 ${value === opt.value ? isDark ? 'bg-gray-600 text-white shadow-sm' : 'bg-white text-ink shadow-sm' : isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           {opt.label}
         </button>
       ))}
@@ -173,7 +173,7 @@ function PillGrid<T extends string>({ value, options, onChange }: PillGridProps<
     <div className="flex flex-wrap gap-2">
       {options.map(opt => (
         <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
-          className={`px-4 py-2 rounded-xl text-[14px] font-medium border transition-all duration-200 ${value === opt.value ? 'bg-blue-500 text-white border-blue-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+          className={`px-4 py-2 rounded-xl text-[14px] font-medium border transition-all duration-200 ${value === opt.value ? 'bg-brand-500 text-white border-brand-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
           {opt.label}
         </button>
       ))}
@@ -211,14 +211,14 @@ function CarAutocomplete({ value, onChange, onSelect, onClear, suggestions, load
   return (
     <div ref={ref} className="relative">
       <div className={`flex items-center rounded-xl border transition-all overflow-hidden ${
-        confirmed ? isDark ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-300'
+        confirmed ? isDark ? 'bg-brand-900/30 border-brand-700' : 'bg-brand-50 border-brand-300'
           : error ? 'ring-2 ring-red-300 border-transparent' : isDark ? 'border-gray-600' : 'border-gray-200'
-      } ${open && !error ? isDark ? 'ring-1 ring-blue-500' : 'ring-1 ring-blue-400' : ''}`}>
+      } ${open && !error ? isDark ? 'ring-1 ring-brand-500' : 'ring-1 ring-brand-400' : ''}`}>
         <input type="text" value={value}
           onChange={e => { onChange(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className={`flex-1 min-w-0 px-4 py-3 text-[15px] outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'} ${!confirmed && !error && !open ? isDark ? 'bg-gray-700' : 'bg-gray-50' : ''}`}
+          className={`flex-1 min-w-0 px-4 py-3 text-[15px] outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-ink placeholder-gray-400'} ${!confirmed && !error && !open ? isDark ? 'bg-gray-700' : 'bg-gray-50' : ''}`}
         />
         {loading ? <Loader2 className={`w-4 h-4 mr-3 animate-spin flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} /> : null}
         {!loading && value && (
@@ -235,7 +235,7 @@ function CarAutocomplete({ value, onChange, onSelect, onClear, suggestions, load
             <button key={s.id} type="button"
               onMouseDown={e => e.preventDefault()}
               onClick={() => { onSelect(s.id, s.name); setOpen(false); }}
-              className={`w-full text-left px-4 py-2.5 text-[14px] transition-colors border-b last:border-0 ${isDark ? 'text-gray-200 hover:bg-gray-700 border-gray-700' : 'text-gray-800 hover:bg-blue-50 border-gray-50'}`}>
+              className={`w-full text-left px-4 py-2.5 text-[14px] transition-colors border-b last:border-0 ${isDark ? 'text-gray-200 hover:bg-gray-700 border-gray-700' : 'text-gray-800 hover:bg-brand-50 border-gray-50'}`}>
               {s.name}
             </button>
           ))}
@@ -346,7 +346,7 @@ export function VehicleForm({ onBack, onNext, initial }: VehicleFormProps) {
   }
 
   const inputCls = (hasError?: boolean) =>
-    `w-full rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-gray-900 placeholder-gray-400'} ${hasError ? 'ring-2 ring-red-300 focus:ring-red-400' : 'focus:ring-blue-400'}`;
+    `w-full rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-ink placeholder-gray-400'} ${hasError ? 'ring-2 ring-red-300 focus:ring-red-400' : 'focus:ring-brand-400'}`;
   const cardCls = `${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm overflow-hidden`;
   const divCls = `border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}`;
 
@@ -356,18 +356,18 @@ export function VehicleForm({ onBack, onNext, initial }: VehicleFormProps) {
   const bodyDigits = BODY_BRANDS_7.includes(upperMake) ? 7 : BODY_BRANDS_6.includes(upperMake) ? 6 : null;
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
       <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button type="button" onClick={onBack} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}>
             <ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className={`text-[17px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Новая оценка</h1>
+            <h1 className={`text-[17px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>Новая оценка</h1>
           </div>
           <div className="flex items-center gap-1.5">
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
-            <div className="w-5 h-1.5 rounded-full bg-blue-500" />
+            <div className="w-5 h-1.5 rounded-full bg-brand-500" />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
           </div>
@@ -378,8 +378,8 @@ export function VehicleForm({ onBack, onNext, initial }: VehicleFormProps) {
       <form onSubmit={handleNext} className="flex-1 px-4 py-4 max-w-md lg:max-w-2xl mx-auto w-full pb-8">
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center"><Car className="w-3.5 h-3.5 text-white" /></div>
-            <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Информация об автомобиле</h2>
+            <div className="w-6 h-6 bg-brand-500 rounded-md flex items-center justify-center"><Car className="w-3.5 h-3.5 text-white" /></div>
+            <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>Информация об автомобиле</h2>
           </div>
 
           <div className={cardCls}>
@@ -509,7 +509,7 @@ export function VehicleForm({ onBack, onNext, initial }: VehicleFormProps) {
           </div>
         </div>
 
-        <button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-semibold text-[16px] py-4 rounded-2xl shadow-sm transition-all duration-150 active:scale-[0.98] mt-2">
+        <button type="submit" className="w-full bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-[16px] py-4 rounded-2xl shadow-sm transition-all duration-150 active:scale-[0.98] mt-2">
           Далее →
         </button>
       </form>

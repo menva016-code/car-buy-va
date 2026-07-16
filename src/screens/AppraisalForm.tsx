@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { ChevronLeft, User, Phone, AlertCircle, Check, Plus, X, MessageCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { formatPhone, isPhoneValid } from '../lib/phone';
-import type { AppraisalFormData, AdditionalContact, OwnershipType, SaleType } from '../types';
-import { MESSENGER_OPTIONS } from '../types';
+import type { AppraisalFormData, AdditionalContact, OwnershipType, SaleType, DealTimeline } from '../types';
+import { MESSENGER_OPTIONS, DEAL_TIMELINE_LABELS } from '../types';
 
 interface AppraisalFormProps {
   onBack: () => void;
@@ -24,6 +24,8 @@ const defaultData: AppraisalFormData = {
   owner_phone: '',
   owner_messengers: [],
   owner_messenger_phone: '',
+  owner_city: '',
+  deal_timeline: null,
   ownership_type: 'individual',
   sale_type: 'buyout',
   sale_reason: '',
@@ -56,26 +58,31 @@ function Field({ label, required, children, error }: FieldProps) {
   );
 }
 
-interface ToggleGroupProps<T extends string> {
+interface ToggleGroupProps<T extends string | null> {
   value: T;
-  options: { value: T; label: string }[];
+  options: { value: Exclude<T, null>; label: string }[];
   onChange: (value: T) => void;
+  allowDeselect?: boolean;
 }
 
-function ToggleGroup<T extends string>({ value, options, onChange }: ToggleGroupProps<T>) {
+function ToggleGroup<T extends string | null>({ value, options, onChange, allowDeselect }: ToggleGroupProps<T>) {
   const { isDark } = useTheme();
   return (
     <div className={`flex rounded-xl p-1 gap-1 ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
-      {options.map((opt) => (
-        <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
+      {options.map((opt) => {
+        const optValue = opt.value as T;
+        const isActive = value === optValue;
+        return (
+        <button key={opt.value} type="button" onClick={() => onChange(isActive && allowDeselect ? (null as T) : optValue)}
           className={`flex-1 py-2 px-3 rounded-lg text-[14px] font-medium transition-all duration-200 ${
-            value === opt.value
-              ? isDark ? 'bg-gray-600 text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm'
+            isActive
+              ? isDark ? 'bg-gray-600 text-white shadow-sm' : 'bg-white text-ink shadow-sm'
               : isDark ? 'text-gray-400' : 'text-gray-500'
           }`}>
           {opt.label}
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -91,8 +98,8 @@ function MessengerPills({ selected, onChange }: { selected: string[]; onChange: 
         <button key={value} type="button" onClick={() => toggle(value)}
           className={`px-4 py-2 rounded-xl text-[14px] font-medium border transition-all duration-200 ${
             selected.includes(value)
-              ? 'bg-blue-500 text-white border-blue-500'
-              : isDark ? 'bg-gray-700 text-gray-300 border-gray-600 hover:border-blue-400' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+              ? 'bg-brand-500 text-white border-brand-500'
+              : isDark ? 'bg-gray-700 text-gray-300 border-gray-600 hover:border-brand-400' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-300'
           }`}>
           {label}
         </button>
@@ -106,7 +113,7 @@ function CheckRow({ checked, onChange, label }: { checked: boolean; onChange: (v
   return (
     <button type="button" onClick={() => onChange(!checked)} className="flex items-center gap-3 py-1 w-full">
       <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
-        checked ? 'bg-blue-500 border-blue-500' : isDark ? 'border-gray-500' : 'border-gray-300'
+        checked ? 'bg-brand-500 border-brand-500' : isDark ? 'border-gray-500' : 'border-gray-300'
       }`}>
         {checked && <Check className="w-3 h-3 text-white" />}
       </div>
@@ -264,14 +271,14 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
   const cardCls = `${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm overflow-hidden`;
   const inputCls = (err?: boolean) =>
     `w-full rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 transition-all ${
-      isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-gray-900 placeholder-gray-400'
-    } ${err ? 'ring-2 ring-red-300 focus:ring-red-400' : 'focus:ring-blue-400'}`;
+      isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-ink placeholder-gray-400'
+    } ${err ? 'ring-2 ring-red-300 focus:ring-red-400' : 'focus:ring-brand-400'}`;
   const dividerCls = `border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}`;
 
   const ac = form.additional_contact;
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Header */}
       <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -280,10 +287,10 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
             <ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
           <div className="flex-1 min-w-0">
-            <h1 className={`text-[17px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Новая оценка</h1>
+            <h1 className={`text-[17px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>Новая оценка</h1>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-1.5 rounded-full bg-blue-500" />
+            <div className="w-5 h-1.5 rounded-full bg-brand-500" />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
@@ -298,10 +305,10 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
 
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3 px-1">
-            <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center">
+            <div className="w-6 h-6 bg-brand-500 rounded-md flex items-center justify-center">
               <User className="w-3.5 h-3.5 text-white" />
             </div>
-            <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Информация о владельце</h2>
+            <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>Информация о владельце</h2>
           </div>
 
           <div className={cardCls}>
@@ -329,7 +336,7 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
               <div className={`px-4 py-3 ${dividerCls}`}>
                 <button type="button" onClick={addAdditional}
                   className={`w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl border-2 border-dashed transition-colors ${
-                    isDark ? 'border-gray-600 text-gray-400 hover:border-blue-500 hover:text-blue-400' : 'border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-500'
+                    isDark ? 'border-gray-600 text-gray-400 hover:border-brand-500 hover:text-brand-400' : 'border-gray-200 text-gray-500 hover:border-brand-400 hover:text-brand-500'
                   }`}>
                   <Plus className="w-4 h-4" />
                   <span className="text-[14px] font-medium">Дополнительный номер для связи</span>
@@ -339,8 +346,8 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
               <div className={dividerCls}>
                 <div className={`px-4 py-3 flex items-center justify-between ${dividerCls}`}>
                   <div className="flex items-center gap-2">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center ${isDark ? 'bg-blue-900/40' : 'bg-blue-50'}`}>
-                      <User className="w-3 h-3 text-blue-500" />
+                    <div className={`w-5 h-5 rounded flex items-center justify-center ${isDark ? 'bg-brand-900/40' : 'bg-brand-50'}`}>
+                      <User className="w-3 h-3 text-brand-500" />
                     </div>
                     <p className={`text-[13px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Дополнительный контакт</p>
                   </div>
@@ -375,6 +382,33 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
 
             {/* Ownership / sale type / reason */}
             <div className={`px-4 py-3.5 ${dividerCls}`}>
+              <Field label="Город проживания">
+                <input
+                  type="text"
+                  value={form.owner_city}
+                  onChange={(e) => update('owner_city', e.target.value)}
+                  placeholder="Например: Москва"
+                  className={inputCls()}
+                />
+              </Field>
+            </div>
+
+            <div className={`px-4 py-3.5 ${dividerCls}`}>
+              <Field label="Когда планируется сделка">
+                <ToggleGroup<DealTimeline | null>
+                  value={form.deal_timeline}
+                  options={[
+                    { value: 'today', label: DEAL_TIMELINE_LABELS.today },
+                    { value: 'this_week', label: DEAL_TIMELINE_LABELS.this_week },
+                    { value: 'this_month', label: DEAL_TIMELINE_LABELS.this_month },
+                  ]}
+                  onChange={(v) => update('deal_timeline', v)}
+                  allowDeselect
+                />
+              </Field>
+            </div>
+
+            <div className={`px-4 py-3.5 ${dividerCls}`}>
               <Field label="Тип владения">
                 <ToggleGroup<OwnershipType>
                   value={form.ownership_type}
@@ -405,7 +439,7 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
         </div>
 
         <button type="submit"
-          className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-semibold text-[16px] py-4 rounded-2xl shadow-sm transition-all duration-150 active:scale-[0.98]">
+          className="w-full bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-[16px] py-4 rounded-2xl shadow-sm transition-all duration-150 active:scale-[0.98]">
           Далее →
         </button>
       </form>

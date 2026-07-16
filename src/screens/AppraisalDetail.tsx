@@ -1,17 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   ChevronLeft, ChevronRight, X, Phone, Car, User,
-  AlertCircle, Camera, Pencil,
+  AlertCircle, AlertTriangle, Camera, Pencil,
   Check, MessageCircle, ClipboardList, FileText, Wrench, Plus,
   Trash2, ExternalLink, Link, Send, Upload, Loader2,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../context/ThemeContext';
 import { formatPhone } from '../lib/phone';
-import type { Appraisal, AppraisalPhoto, AdditionalContact, OwnershipType, SaleType, TransmissionType, DriveType, FuelType, PresaleCost } from '../types';
+import type { Appraisal, AppraisalPhoto, AdditionalContact, OwnershipType, SaleType, TransmissionType, DriveType, FuelType, PresaleCost, DealTimeline } from '../types';
 import {
   TRANSMISSION_LABELS, DRIVE_LABELS, FUEL_LABELS,
-  OWNERSHIP_LABELS, SALE_TYPE_LABELS, MESSENGER_LABELS, MESSENGER_OPTIONS,
+  OWNERSHIP_LABELS, SALE_TYPE_LABELS, MESSENGER_LABELS, MESSENGER_OPTIONS, DEAL_TIMELINE_LABELS,
 } from '../types';
 
 interface AppraisalDetailProps {
@@ -76,11 +76,11 @@ function SectionHeader({ icon, title, onEdit }: { icon: React.ReactNode; title: 
   return (
     <div className="flex items-center justify-between mb-3 px-1">
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center flex-shrink-0">{icon}</div>
-        <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h2>
+        <div className="w-6 h-6 bg-brand-500 rounded-md flex items-center justify-center flex-shrink-0">{icon}</div>
+        <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>{title}</h2>
       </div>
       {onEdit && (
-        <button type="button" onClick={onEdit} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors ${isDark ? 'bg-gray-700 text-gray-400 hover:text-blue-400' : 'bg-gray-100 text-gray-500 hover:text-blue-500'}`}>
+        <button type="button" onClick={onEdit} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors ${isDark ? 'bg-gray-700 text-gray-400 hover:text-brand-400' : 'bg-gray-100 text-gray-500 hover:text-brand-500'}`}>
           <Pencil className="w-3 h-3" />Изменить
         </button>
       )}
@@ -115,17 +115,21 @@ function SubLabel({ text }: { text: string }) {
 
 // ---- Edit Helpers ----
 
-interface ToggleGroupProps<T extends string> { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; }
-function ToggleGroup<T extends string>({ value, options, onChange }: ToggleGroupProps<T>) {
+interface ToggleGroupProps<T extends string | null> { value: T; options: { value: Exclude<T, null>; label: string }[]; onChange: (v: T) => void; allowDeselect?: boolean; }
+function ToggleGroup<T extends string | null>({ value, options, onChange, allowDeselect }: ToggleGroupProps<T>) {
   const { isDark } = useTheme();
   return (
     <div className={`flex rounded-xl p-1 gap-1 ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
-      {options.map(opt => (
-        <button key={opt.value} type="button" onClick={() => onChange(opt.value)}
-          className={`flex-1 py-2 px-2 rounded-lg text-[13px] font-medium transition-all ${value === opt.value ? isDark ? 'bg-gray-600 text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm' : isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+      {options.map(opt => {
+        const optValue = opt.value as T;
+        const isActive = value === optValue;
+        return (
+        <button key={opt.value} type="button" onClick={() => onChange(isActive && allowDeselect ? (null as T) : optValue)}
+          className={`flex-1 py-2 px-2 rounded-lg text-[13px] font-medium transition-all ${isActive ? isDark ? 'bg-gray-600 text-white shadow-sm' : 'bg-white text-ink shadow-sm' : isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           {opt.label}
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -134,7 +138,7 @@ function CheckRow({ checked, onChange, label }: { checked: boolean; onChange: (v
   const { isDark } = useTheme();
   return (
     <button type="button" onClick={() => onChange(!checked)} className="flex items-center gap-3 py-1 w-full">
-      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${checked ? 'bg-blue-500 border-blue-500' : isDark ? 'border-gray-500' : 'border-gray-300'}`}>
+      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors ${checked ? 'bg-brand-500 border-brand-500' : isDark ? 'border-gray-500' : 'border-gray-300'}`}>
         {checked && <Check className="w-3 h-3 text-white" />}
       </div>
       <span className={`text-[14px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{label}</span>
@@ -194,6 +198,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
   const [sendingApproval, setSendingApproval] = useState(false);
   const [approvalError, setApprovalError] = useState<string | null>(null);
   const [approvalSent, setApprovalSent] = useState(false);
+  const [missingDataModal, setMissingDataModal] = useState<string[] | null>(null);
 
   // PDF re-upload state
   const [uploadingConditionPdf, setUploadingConditionPdf] = useState(false);
@@ -269,6 +274,8 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
         owner_phone: editData.owner_phone,
         owner_messengers: editData.owner_messengers,
         owner_messenger_phone: editDiffPhone ? editData.owner_messenger_phone : null,
+        owner_city: editData.owner_city,
+        deal_timeline: editData.deal_timeline,
         ownership_type: editData.ownership_type,
         sale_type: editData.sale_type,
         sale_reason: editData.sale_reason,
@@ -406,6 +413,8 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
 
     lines.push(`🚗 ${a.make ?? '—'} ${a.model ?? '—'} (${a.year ?? '—'})`);
     lines.push(`👤 Владелец: ${a.owner_name ?? '—'} ${formatPhone(a.owner_phone ?? '')}`);
+    if (a.owner_city) lines.push(`🏙️ Город: ${a.owner_city}`);
+    if (a.deal_timeline) lines.push(`📅 Сделка: ${DEAL_TIMELINE_LABELS[a.deal_timeline]}`);
     lines.push(`💼 Тип продажи: ${a.sale_type ? SALE_TYPE_LABELS[a.sale_type] : '—'}`);
     lines.push(`📍 Причина продажи: ${a.sale_reason ?? 'Не указана'}`);
     lines.push(SEP);
@@ -445,6 +454,34 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     lines.push(a.sale_price != null ? `${a.sale_price.toLocaleString('ru-RU')} ₽` : '—');
 
     return lines.join('\n');
+  }
+
+  function getAppraisalMissingData(): string[] {
+    if (!appraisal) return [];
+    const missing: string[] = [];
+    if (!appraisal.make) missing.push('Марка автомобиля');
+    if (!appraisal.model) missing.push('Модель автомобиля');
+    if (!appraisal.year) missing.push('Год выпуска');
+    if (!appraisal.mileage) missing.push('Пробег');
+    if (!appraisal.vin && !appraisal.license_plate) missing.push('VIN или гос. номер');
+    if (!appraisal.owner_price) missing.push('Цена владельца');
+    if (!appraisal.purchase_price) missing.push('Цена выкупа');
+    if (!appraisal.owner_name) missing.push('Имя владельца');
+    if (!appraisal.owner_phone) missing.push('Телефон владельца');
+    const exteriorSlots = ['front', 'left', 'rear', 'right'];
+    const hasExterior = exteriorSlots.some(s => (urlsBySlot[s]?.length ?? 0) > 0);
+    if (!hasExterior) missing.push('Фото кузова (снаружи)');
+    if (!urlsBySlot['sts']?.length && !appraisal.sts_photo_url) missing.push('Фото СТС');
+    return missing;
+  }
+
+  function handleApprovalClick() {
+    const missing = getAppraisalMissingData();
+    if (missing.length > 0) {
+      setMissingDataModal(missing);
+    } else {
+      handleSendApproval();
+    }
   }
 
   async function handleSendApproval() {
@@ -494,11 +531,11 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
 
   const cardCls = `${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm p-4`;
   const divCls = `border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`;
-  const inputCls = `w-full rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-blue-400 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-gray-900 placeholder-gray-400'}`;
+  const inputCls = `w-full rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-brand-400 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-ink placeholder-gray-400'}`;
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+      <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button onClick={onBack} className={`w-9 h-9 flex items-center justify-center rounded-xl ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}><ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} /></button>
@@ -513,11 +550,11 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
 
   if (!appraisal) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="text-center px-6">
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-          <p className={`text-[16px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Оценка не найдена</p>
-          <button onClick={onBack} className="mt-4 text-blue-500 text-[14px] font-medium">Назад</button>
+          <p className={`text-[16px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>Оценка не найдена</p>
+          <button onClick={onBack} className="mt-4 text-brand-500 text-[14px] font-medium">Назад</button>
         </div>
       </div>
     );
@@ -577,7 +614,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
             {saveError && <p className="text-red-500 text-[12px] mb-3">{saveError}</p>}
             <div className="flex gap-2">
               <button type="button" onClick={cancelEdit} className={`flex-1 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Отмена</button>
-              <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-blue-500 text-white disabled:opacity-60 transition-colors">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+              <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-brand-500 text-white disabled:opacity-60 transition-colors">{saving ? 'Сохранение...' : 'Сохранить'}</button>
             </div>
           </div>
         </div>
@@ -594,7 +631,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
             </div>
             <div className="px-4 py-3.5">
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Стоимость продажи</p>
-              <p className={`text-[17px] font-bold mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{fPrice(appraisal.sale_price) ?? '—'}</p>
+              <p className={`text-[17px] font-bold mt-0.5 ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>{fPrice(appraisal.sale_price) ?? '—'}</p>
             </div>
             <div className="px-4 py-3.5">
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Статус</p>
@@ -635,7 +672,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="flex gap-2 flex-wrap">
                 {MESSENGER_OPTIONS.map(({ value, label }) => (
                   <button key={value} type="button" onClick={() => setEdit('owner_messengers', edMessengers.includes(value) ? edMessengers.filter(v => v !== value) : [...edMessengers, value])}
-                    className={`px-3 py-1.5 rounded-xl text-[13px] font-medium border transition-all ${edMessengers.includes(value) ? 'bg-blue-500 text-white border-blue-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    className={`px-3 py-1.5 rounded-xl text-[13px] font-medium border transition-all ${edMessengers.includes(value) ? 'bg-brand-500 text-white border-brand-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
                     {label}
                   </button>
                 ))}
@@ -651,6 +688,14 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                   )}
                 </div>
               )}
+            </div>
+            <div className={`px-4 py-3.5 border-b ${divCls}`}>
+              <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Город проживания</p>
+              <input value={ed.owner_city ?? ''} onChange={e => setEdit('owner_city', e.target.value)} placeholder="Например: Москва" className={inputCls} />
+            </div>
+            <div className={`px-4 py-3.5 border-b ${divCls}`}>
+              <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Когда планируется сделка</p>
+              <ToggleGroup<DealTimeline | null> value={ed.deal_timeline ?? null} allowDeselect options={[{ value: 'today', label: 'Сегодня' }, { value: 'this_week', label: 'Эта неделя' }, { value: 'this_month', label: 'Этот месяц' }]} onChange={v => setEdit('deal_timeline', v)} />
             </div>
             <div className={`px-4 py-3.5 border-b ${divCls}`}>
               <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Тип владения</p>
@@ -688,7 +733,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                 <div className="flex gap-2 flex-wrap">
                   {MESSENGER_OPTIONS.map(({ value, label }) => (
                     <button key={value} type="button" onClick={() => setEditAdditional('messengers', edAc.messengers.includes(value) ? edAc.messengers.filter(v => v !== value) : [...edAc.messengers, value])}
-                      className={`px-3 py-1.5 rounded-xl text-[13px] font-medium border transition-all ${edAc.messengers.includes(value) ? 'bg-blue-500 text-white border-blue-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                      className={`px-3 py-1.5 rounded-xl text-[13px] font-medium border transition-all ${edAc.messengers.includes(value) ? 'bg-brand-500 text-white border-brand-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
                       {label}
                     </button>
                   ))}
@@ -706,7 +751,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           )}
           {!editShowAdditional && (
             <button type="button" onClick={() => { setEditShowAdditional(true); setEdit('additional_contact', { name: '', phone: '', contact_type: '', messengers: [], messenger_phone: '' }); }}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed mb-3 text-[14px] font-medium transition-colors ${isDark ? 'border-gray-600 text-gray-400 hover:border-blue-500 hover:text-blue-400' : 'border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-500'}`}>
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed mb-3 text-[14px] font-medium transition-colors ${isDark ? 'border-gray-600 text-gray-400 hover:border-brand-500 hover:text-brand-400' : 'border-gray-200 text-gray-500 hover:border-brand-400 hover:text-brand-500'}`}>
               + Дополнительный контакт
             </button>
           )}
@@ -714,7 +759,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           {saveError && <p className="text-red-500 text-[12px] mb-3">{saveError}</p>}
           <div className="flex gap-2">
             <button type="button" onClick={cancelEdit} className={`flex-1 py-2.5 rounded-xl text-[14px] font-medium ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Отмена</button>
-            <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-blue-500 text-white disabled:opacity-60">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+            <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-brand-500 text-white disabled:opacity-60">{saving ? 'Сохранение...' : 'Сохранить'}</button>
           </div>
         </div>
       );
@@ -727,9 +772,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
         <div className={cardCls}>
           <div className={`pb-3.5 mb-3.5 border-b ${divCls}`}>
             <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Имя</p>
-            <p className={`text-[15px] font-semibold mt-0.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>{appraisal.owner_name}</p>
+            <p className={`text-[15px] font-semibold mt-0.5 ${isDark ? 'text-white' : 'text-ink'}`}>{appraisal.owner_name}</p>
           </div>
-          <a href={`tel:${appraisal.owner_phone}`} className={`flex items-center gap-2 py-1 mb-3.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+          <a href={`tel:${appraisal.owner_phone}`} className={`flex items-center gap-2 py-1 mb-3.5 ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>
             <Phone className="w-4 h-4 flex-shrink-0" />
             <span className="text-[15px] font-medium">{appraisal.owner_phone}</span>
           </a>
@@ -737,16 +782,18 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
             <div className={`py-3.5 mb-3.5 border-y ${divCls}`}>
               <p className={`text-[11px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Мессенджеры</p>
               <div className="flex flex-wrap gap-2 mb-2">
-                {messengers.map(m => <span key={m} className={`px-2.5 py-1 rounded-lg text-[12px] font-medium ${isDark ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>{MESSENGER_LABELS[m] ?? m}</span>)}
+                {messengers.map(m => <span key={m} className={`px-2.5 py-1 rounded-lg text-[12px] font-medium ${isDark ? 'bg-brand-900/40 text-brand-400' : 'bg-brand-50 text-brand-600'}`}>{MESSENGER_LABELS[m] ?? m}</span>)}
               </div>
               {appraisal.owner_messenger_phone && (
-                <a href={`tel:${appraisal.owner_messenger_phone}`} className={`flex items-center gap-1.5 text-[13px] ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                <a href={`tel:${appraisal.owner_messenger_phone}`} className={`flex items-center gap-1.5 text-[13px] ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>
                   <MessageCircle className="w-3.5 h-3.5" />{appraisal.owner_messenger_phone}
                 </a>
               )}
             </div>
           )}
           <div className={`pt-3.5 border-t ${divCls} grid grid-cols-2 gap-3`}>
+            <InfoRow label="Город" value={appraisal.owner_city || '—'} />
+            <InfoRow label="Сделка" value={appraisal.deal_timeline ? DEAL_TIMELINE_LABELS[appraisal.deal_timeline] : '—'} />
             <InfoRow label="Тип владения" value={OWNERSHIP_LABELS[appraisal.ownership_type]} />
             <InfoRow label="Тип продажи" value={SALE_TYPE_LABELS[appraisal.sale_type]} />
             {appraisal.sale_reason && <InfoRow label="Причина продажи" value={appraisal.sale_reason} full />}
@@ -759,17 +806,17 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <InfoRow label="Имя" value={appraisal.additional_contact.name} />
               <InfoRow label="Тип контакта" value={appraisal.additional_contact.contact_type} />
             </div>
-            <a href={`tel:${appraisal.additional_contact.phone}`} className={`flex items-center gap-2 mt-3 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+            <a href={`tel:${appraisal.additional_contact.phone}`} className={`flex items-center gap-2 mt-3 ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>
               <Phone className="w-4 h-4 flex-shrink-0" />
               <span className="text-[15px] font-medium">{appraisal.additional_contact.phone}</span>
             </a>
             {appraisal.additional_contact.messengers?.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
-                {appraisal.additional_contact.messengers.map(m => <span key={m} className={`px-2.5 py-1 rounded-lg text-[12px] font-medium ${isDark ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>{MESSENGER_LABELS[m] ?? m}</span>)}
+                {appraisal.additional_contact.messengers.map(m => <span key={m} className={`px-2.5 py-1 rounded-lg text-[12px] font-medium ${isDark ? 'bg-brand-900/40 text-brand-400' : 'bg-brand-50 text-brand-600'}`}>{MESSENGER_LABELS[m] ?? m}</span>)}
               </div>
             )}
             {appraisal.additional_contact.messenger_phone && (
-              <a href={`tel:${appraisal.additional_contact.messenger_phone}`} className={`flex items-center gap-1.5 mt-1.5 text-[13px] ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+              <a href={`tel:${appraisal.additional_contact.messenger_phone}`} className={`flex items-center gap-1.5 mt-1.5 text-[13px] ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>
                 <MessageCircle className="w-3.5 h-3.5" />{appraisal.additional_contact.messenger_phone}
               </a>
             )}
@@ -836,7 +883,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="flex flex-wrap gap-2">
                 {fOpts.map(({ value, label }) => (
                   <button key={value} type="button" onClick={() => setEdit('fuel_type', value as FuelType)}
-                    className={`px-3 py-1.5 rounded-xl text-[13px] font-medium border transition-all ${ed.fuel_type === value ? 'bg-blue-500 text-white border-blue-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
+                    className={`px-3 py-1.5 rounded-xl text-[13px] font-medium border transition-all ${ed.fuel_type === value ? 'bg-brand-500 text-white border-brand-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'}`}>
                     {label}
                   </button>
                 ))}
@@ -861,7 +908,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           {saveError && <p className="text-red-500 text-[12px] mb-3">{saveError}</p>}
           <div className="flex gap-2 mb-4">
             <button type="button" onClick={cancelEdit} className={`flex-1 py-2.5 rounded-xl text-[14px] font-medium ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Отмена</button>
-            <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-blue-500 text-white disabled:opacity-60">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+            <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-brand-500 text-white disabled:opacity-60">{saving ? 'Сохранение...' : 'Сохранить'}</button>
           </div>
         </div>
       );
@@ -890,7 +937,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     <>
       {lightbox && <Lightbox state={lightbox} onClose={() => setLightbox(null)} />}
 
-      <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+      <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
         {/* Header */}
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -898,7 +945,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className={`text-[16px] font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h1>
+              <h1 className={`text-[16px] font-semibold truncate ${isDark ? 'text-white' : 'text-ink'}`}>{title}</h1>
               <p className={`text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{fDate(appraisal.created_at)}</p>
             </div>
           </div>
@@ -910,7 +957,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           <div className={cardCls}>
             <div className="flex items-start justify-between gap-3 mb-3">
               <div>
-                <p className={`text-[22px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <p className={`text-[22px] font-bold leading-tight ${isDark ? 'text-white' : 'text-ink'}`}>
                   {[appraisal.make, appraisal.model].filter(Boolean).join(' ') || '—'}
                 </p>
                 <p className={`text-[15px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{appraisal.year ?? '—'}</p>
@@ -923,7 +970,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               )}
             </div>
             <div className="flex flex-wrap gap-2">
-              {appraisal.transmission && <span className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold ${isDark ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>{TRANSMISSION_LABELS[appraisal.transmission]}</span>}
+              {appraisal.transmission && <span className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold ${isDark ? 'bg-brand-900/40 text-brand-400' : 'bg-brand-50 text-brand-600'}`}>{TRANSMISSION_LABELS[appraisal.transmission]}</span>}
               {appraisal.fuel_type && <span className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>{FUEL_LABELS[appraisal.fuel_type]}</span>}
               {appraisal.drive_type && <span className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>{DRIVE_LABELS[appraisal.drive_type]}</span>}
               {appraisal.engine_volume && <span className={`px-2.5 py-1 rounded-lg text-[12px] font-semibold ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>{appraisal.engine_volume}</span>}
@@ -937,8 +984,8 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <Check className="w-4 h-4" />Отправлено в Telegram
             </div>
           ) : (
-            <button type="button" onClick={handleSendApproval} disabled={sendingApproval}
-              className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all disabled:opacity-60 ${isDark ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-blue-500 text-white hover:bg-blue-600'}`}>
+            <button type="button" onClick={handleApprovalClick} disabled={sendingApproval}
+              className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all disabled:opacity-60 ${isDark ? 'bg-brand-600 text-white hover:bg-brand-500' : 'bg-brand-500 text-white hover:bg-brand-600'}`}>
               {sendingApproval ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               {sendingApproval ? 'Отправка...' : 'Отправить на согласование'}
             </button>
@@ -972,7 +1019,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               {costs.length > 0 && (
                 <div className={`flex items-center justify-between py-2.5 border-b ${divCls} mb-3`}>
                   <p className={`text-[13px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Итого</p>
-                  <p className={`text-[16px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{new Intl.NumberFormat('ru-RU').format(costs.reduce((s, c) => s + c.cost, 0))} ₽</p>
+                  <p className={`text-[16px] font-bold ${isDark ? 'text-white' : 'text-ink'}`}>{new Intl.NumberFormat('ru-RU').format(costs.reduce((s, c) => s + c.cost, 0))} ₽</p>
                 </div>
               )}
               {addingCost ? (
@@ -992,12 +1039,12 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                   />
                   <div className="flex gap-2 pt-1">
                     <button type="button" onClick={() => { setAddingCost(false); setNewCostType(''); setNewCostAmount(''); setCostAmountDisplay(''); }} className={`flex-1 py-2 rounded-xl text-[13px] font-medium ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Отмена</button>
-                    <button type="button" onClick={addCost} disabled={savingCosts || !newCostType.trim() || !newCostAmount.trim()} className="flex-1 py-2 rounded-xl text-[13px] font-semibold bg-blue-500 text-white disabled:opacity-50">Добавить</button>
+                    <button type="button" onClick={addCost} disabled={savingCosts || !newCostType.trim() || !newCostAmount.trim()} className="flex-1 py-2 rounded-xl text-[13px] font-semibold bg-brand-500 text-white disabled:opacity-50">Добавить</button>
                   </div>
                 </div>
               ) : (
                 <button type="button" onClick={() => setAddingCost(true)}
-                  className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed text-[13px] font-medium transition-colors ${isDark ? 'border-gray-600 text-gray-400 hover:border-blue-500 hover:text-blue-400' : 'border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-500'}`}>
+                  className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed text-[13px] font-medium transition-colors ${isDark ? 'border-gray-600 text-gray-400 hover:border-brand-500 hover:text-brand-400' : 'border-gray-200 text-gray-500 hover:border-brand-400 hover:text-brand-500'}`}>
                   <Plus className="w-4 h-4" />Добавить услугу
                 </button>
               )}
@@ -1014,18 +1061,18 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Отчёт толщинометра (PDF)</p>
                 {appraisal.car_condition_pdf_url ? (
                   <div className={`flex items-center gap-3 px-4 py-3 -mx-4 rounded-xl mb-3 ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                    <FileText className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
-                    <a href={appraisal.car_condition_pdf_url} target="_blank" rel="noopener noreferrer" className={`flex-1 text-[13px] font-medium truncate ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Отчёт толщинометра</a>
+                    <FileText className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-brand-400' : 'text-brand-500'}`} />
+                    <a href={appraisal.car_condition_pdf_url} target="_blank" rel="noopener noreferrer" className={`flex-1 text-[13px] font-medium truncate ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>Отчёт толщинометра</a>
                     <label className="cursor-pointer">
                       <input type="file" accept="application/pdf" className="hidden"
                         onChange={e => { const f = e.target.files?.[0]; if (f) handleConditionPdfReplace(f); e.target.value = ''; }} />
-                      <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400 hover:text-blue-400' : 'text-gray-500 hover:text-blue-500'}`}>
+                      <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400 hover:text-brand-400' : 'text-gray-500 hover:text-brand-500'}`}>
                         {uploadingConditionPdf ? 'Загрузка...' : 'Заменить'}
                       </span>
                     </label>
                   </div>
                 ) : (
-                  <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors mb-3 ${isDark ? 'border-gray-600 bg-gray-700/40 hover:border-blue-500' : 'border-gray-200 bg-gray-50 hover:border-blue-400'}`}>
+                  <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors mb-3 ${isDark ? 'border-gray-600 bg-gray-700/40 hover:border-brand-500' : 'border-gray-200 bg-gray-50 hover:border-brand-400'}`}>
                     <input type="file" accept="application/pdf" className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handleConditionPdfReplace(f); e.target.value = ''; }} />
                     <FileText className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -1037,7 +1084,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                 {saveError && <p className="text-red-500 text-[12px] mb-3">{saveError}</p>}
                 <div className="flex gap-2">
                   <button type="button" onClick={cancelEdit} className={`flex-1 py-2.5 rounded-xl text-[14px] font-medium ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Отмена</button>
-                  <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-blue-500 text-white disabled:opacity-60">{saving ? 'Сохранение...' : 'Сохранить'}</button>
+                  <button type="button" onClick={saveEdit} disabled={saving} className="flex-1 py-2.5 rounded-xl text-[14px] font-semibold bg-brand-500 text-white disabled:opacity-60">{saving ? 'Сохранение...' : 'Сохранить'}</button>
                 </div>
               </div>
             ) : (
@@ -1045,8 +1092,8 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                 {appraisal.car_condition_pdf_url && (
                   <a href={appraisal.car_condition_pdf_url} target="_blank" rel="noopener noreferrer"
                     className={`flex items-center gap-3 px-4 py-3 -mx-4 -mt-4 mb-3 rounded-t-2xl border-b transition-colors ${isDark ? 'bg-gray-700/50 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}>
-                    <FileText className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
-                    <span className={`flex-1 text-[13px] font-medium ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Отчёт толщинометра (PDF)</span>
+                    <FileText className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-brand-400' : 'text-brand-500'}`} />
+                    <span className={`flex-1 text-[13px] font-medium ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>Отчёт толщинометра (PDF)</span>
                     <ExternalLink className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                   </a>
                 )}
@@ -1066,14 +1113,14 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               {appraisal.autoteka_pdf_url && (
                 <a href={appraisal.autoteka_pdf_url} target="_blank" rel="noopener noreferrer"
                   className={`flex items-center gap-3 px-4 py-3 -mx-4 -mt-4 mb-3 rounded-t-2xl border-b transition-colors ${isDark ? 'bg-gray-700/50 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}>
-                  <FileText className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
-                  <span className={`flex-1 text-[13px] font-medium ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Отчёт Автотеки (PDF)</span>
+                  <FileText className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-brand-400' : 'text-brand-500'}`} />
+                  <span className={`flex-1 text-[13px] font-medium ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>Отчёт Автотеки (PDF)</span>
                   <ExternalLink className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                 </a>
               )}
               {appraisal.autoteka_url && (
                 <a href={appraisal.autoteka_url} target="_blank" rel="noopener noreferrer"
-                  className={`flex items-center gap-2 mb-3 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  className={`flex items-center gap-2 mb-3 ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>
                   <Link className="w-4 h-4 flex-shrink-0" />
                   <span className="text-[14px] font-medium truncate">Ссылка на Автотеку</span>
                   <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
@@ -1089,15 +1136,15 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                   <input type="url" value={editAutotekaUrl} onChange={e => setEditAutotekaUrl(e.target.value)}
                     placeholder="https://autoteka.ru/..." className={`${inputCls} flex-1 text-[13px]`} />
                   <button type="button" onClick={handleAutotekaUrlSave} disabled={!editAutotekaUrl.trim()}
-                    className="px-3 py-2 bg-blue-500 text-white rounded-xl text-[13px] font-medium disabled:opacity-40">ОК</button>
+                    className="px-3 py-2 bg-brand-500 text-white rounded-xl text-[13px] font-medium disabled:opacity-40">ОК</button>
                 </div>
               </div>
               {/* PDF upload */}
               <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>PDF Автотеки</p>
-              <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 bg-gray-700/40 hover:border-blue-500' : 'border-gray-200 bg-gray-50 hover:border-blue-400'}`}>
+              <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 bg-gray-700/40 hover:border-brand-500' : 'border-gray-200 bg-gray-50 hover:border-brand-400'}`}>
                 <input type="file" accept="application/pdf" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleAutotekaPdfReplace(f); e.target.value = ''; }} />
-                {uploadingAutotekaPdf ? <Upload className={`w-5 h-5 flex-shrink-0 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <FileText className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                {uploadingAutotekaPdf ? <Upload className={`w-5 h-5 flex-shrink-0 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <FileText className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                 <span className={`text-[13px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   {uploadingAutotekaPdf ? 'Загрузка...' : appraisal.autoteka_pdf_url ? 'Заменить PDF' : 'Прикрепить PDF файл'}
                 </span>
@@ -1109,11 +1156,11 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           <div>
             <div className="flex items-center justify-between mb-3 px-1">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center flex-shrink-0"><Camera className="w-3.5 h-3.5 text-white" /></div>
-                <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Фотографии</h2>
+                <div className="w-6 h-6 bg-brand-500 rounded-md flex items-center justify-center flex-shrink-0"><Camera className="w-3.5 h-3.5 text-white" /></div>
+                <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>Фотографии</h2>
               </div>
               <button type="button" onClick={() => setEditingPhotos(p => !p)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors ${editingPhotos ? isDark ? 'bg-blue-900/40 text-blue-400' : 'bg-blue-50 text-blue-600' : isDark ? 'bg-gray-700 text-gray-400 hover:text-blue-400' : 'bg-gray-100 text-gray-500 hover:text-blue-500'}`}>
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors ${editingPhotos ? isDark ? 'bg-brand-900/40 text-brand-400' : 'bg-brand-50 text-brand-600' : isDark ? 'bg-gray-700 text-gray-400 hover:text-brand-400' : 'bg-gray-100 text-gray-500 hover:text-brand-500'}`}>
                 <Pencil className="w-3 h-3" />{editingPhotos ? 'Готово' : 'Изменить'}
               </button>
             </div>
@@ -1133,9 +1180,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                       </div>
                     ))}
                     {editingPhotos && (
-                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                         <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto('sts', f, false); e.target.value = ''; }} />
-                        {uploadingPhoto === 'sts' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        {uploadingPhoto === 'sts' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                         <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
                       </label>
                     )}
@@ -1159,9 +1206,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                           </div>
                         ))}
                         {editingPhotos && !(urlsBySlot[slot]?.length) && (
-                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
-                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                             <span className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{{front:'Передняя',left:'Левая',rear:'Задняя',right:'Правая'}[slot]}</span>
                           </label>
                         )}
@@ -1188,9 +1235,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                           </div>
                         ))}
                         {editingPhotos && !(urlsBySlot[slot]?.length) && (
-                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
-                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                             <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{slot === 'front_light_left' ? 'Левая' : 'Правая'}</span>
                           </label>
                         )}
@@ -1208,9 +1255,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                           </div>
                         ))}
                         {editingPhotos && !(urlsBySlot[slot]?.length) && (
-                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
-                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                             <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{slot === 'rear_light_left' ? 'Левая' : 'Правая'}</span>
                           </label>
                         )}
@@ -1236,9 +1283,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                           </div>
                         ))}
                         {editingPhotos && !(urlsBySlot[slot]?.length) && (
-                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
-                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                             <span className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{slot === 'tire_specs' ? 'Параметры' : 'Дата выпуска'}</span>
                           </label>
                         )}
@@ -1262,9 +1309,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                       </div>
                     ))}
                     {editingPhotos && !(urlsBySlot['windshield']?.length) && (
-                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                         <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto('windshield', f, false); e.target.value = ''; }} />
-                        {uploadingPhoto === 'windshield' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        {uploadingPhoto === 'windshield' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                         <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
                       </label>
                     )}
@@ -1286,9 +1333,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                       </div>
                     ))}
                     {editingPhotos && (
-                      <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                      <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('body_extra', f, true)); e.target.value = ''; }} />
-                        {uploadingPhoto === 'body_extra' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        {uploadingPhoto === 'body_extra' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                         <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
                       </label>
                     )}
@@ -1310,9 +1357,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                       </div>
                     ))}
                     {editingPhotos && (
-                      <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                      <label className={`aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('body_defects', f, true)); e.target.value = ''; }} />
-                        {uploadingPhoto === 'body_defects' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        {uploadingPhoto === 'body_defects' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                         <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
                       </label>
                     )}
@@ -1336,9 +1383,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                           </div>
                         ))}
                         {editingPhotos && !(urlsBySlot[slot]?.length) && (
-                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
-                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                             <span className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{{interior_driver:'Водительская дверь',interior_left_pass:'Левая пассажирская',interior_right_rear:'Правая задняя',interior_front_pass:'Передняя пассажирская'}[slot]}</span>
                           </label>
                         )}
@@ -1364,9 +1411,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                           </div>
                         ))}
                         {editingPhotos && !(urlsBySlot[slot]?.length) && (
-                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
-                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                             <span className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{{interior_dashboard:'Приборная панель',interior_console:'Центральная консоль'}[slot]}</span>
                           </label>
                         )}
@@ -1390,9 +1437,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                       </div>
                     ))}
                     {editingPhotos && (
-                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_extras', f, true)); e.target.value = ''; }} />
-                        {uploadingPhoto === 'interior_extras' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        {uploadingPhoto === 'interior_extras' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                         <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
                       </label>
                     )}
@@ -1414,9 +1461,9 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                       </div>
                     ))}
                     {editingPhotos && (
-                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-brand-500' : 'border-gray-200 hover:border-brand-400'}`}>
                         <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_defects', f, true)); e.target.value = ''; }} />
-                        {uploadingPhoto === 'interior_defects' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        {uploadingPhoto === 'interior_defects' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-brand-400' : 'text-brand-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
                         <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
                       </label>
                     )}
@@ -1449,6 +1496,31 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
         </div>
       </div>
 
+      {/* Missing data modal */}
+      {missingDataModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center px-4 pb-8">
+          <div className={`w-full max-w-md rounded-3xl p-6 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            </div>
+            <h3 className={`text-[18px] font-semibold text-center mb-1 ${isDark ? 'text-white' : 'text-ink'}`}>Не все данные заполнены</h3>
+            <p className={`text-[14px] text-center mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Следующие данные отсутствуют:</p>
+            <ul className={`space-y-1.5 mb-6 max-h-48 overflow-y-auto`}>
+              {missingDataModal.map((item, i) => (
+                <li key={i} className={`flex items-center gap-2 text-[14px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setMissingDataModal(null)} className={`flex-1 py-3 rounded-2xl text-[15px] font-medium transition-colors ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Вернуться назад</button>
+              <button type="button" onClick={() => { setMissingDataModal(null); handleSendApproval(); }} className="flex-1 py-3 rounded-2xl text-[15px] font-semibold bg-brand-500 text-white transition-colors hover:bg-brand-600">Отправить</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center px-4 pb-8">
@@ -1456,7 +1528,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className={`text-[18px] font-semibold text-center mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>Удалить оценку?</h3>
+            <h3 className={`text-[18px] font-semibold text-center mb-1 ${isDark ? 'text-white' : 'text-ink'}`}>Удалить оценку?</h3>
             <p className={`text-[14px] text-center mb-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Это действие нельзя отменить. Все данные и фотографии будут удалены.</p>
             <div className="flex gap-3">
               <button type="button" onClick={() => setShowDeleteConfirm(false)} className={`flex-1 py-3 rounded-2xl text-[15px] font-medium transition-colors ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>Отмена</button>

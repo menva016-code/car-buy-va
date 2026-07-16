@@ -72,8 +72,8 @@ function SinglePhotoCard({ slot, file, label, onSelect, onRemove }: SinglePhotoC
           htmlFor={inputId}
           className={`w-full h-full flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
             isDark
-              ? 'border-gray-600 bg-gray-800 hover:border-blue-500 hover:bg-gray-700'
-              : 'border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/30'
+              ? 'border-gray-600 bg-gray-800 hover:border-brand-500 hover:bg-gray-700'
+              : 'border-gray-200 bg-gray-50 hover:border-brand-400 hover:bg-brand-50/30'
           }`}
         >
           <Camera className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -133,8 +133,8 @@ function MultiPhotoGrid({ slot, files, onAdd, onRemove }: MultiPhotoGridProps) {
         htmlFor={inputId}
         className={`w-[30%] aspect-square flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${
           isDark
-            ? 'border-gray-600 bg-gray-800 hover:border-blue-500'
-            : 'border-gray-200 bg-gray-50 hover:border-blue-400'
+            ? 'border-gray-600 bg-gray-800 hover:border-brand-500'
+            : 'border-gray-200 bg-gray-50 hover:border-brand-400'
         }`}
       >
         <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -157,10 +157,10 @@ function Section({ title, icon, children }: SectionProps) {
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2 mb-3 px-1">
-        <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center flex-shrink-0">
+        <div className="w-6 h-6 bg-brand-500 rounded-md flex items-center justify-center flex-shrink-0">
           {icon}
         </div>
-        <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h2>
+        <h2 className={`text-[15px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>{title}</h2>
       </div>
       <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm p-4`}>
         {children}
@@ -190,16 +190,16 @@ function UploadProgress({ done, total }: UploadProgressProps) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-8">
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-xs text-center">
-        <Upload className="w-10 h-10 text-blue-500 mx-auto mb-4" />
-        <p className="text-[16px] font-semibold text-gray-900 dark:text-white mb-1">Загрузка фотографий</p>
+        <Upload className="w-10 h-10 text-brand-500 mx-auto mb-4" />
+        <p className="text-[16px] font-semibold text-ink dark:text-white mb-1">Загрузка фотографий</p>
         <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-4">{done} из {total}</p>
         <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
           <div
-            className="h-full bg-blue-500 rounded-full transition-all duration-300"
+            className="h-full bg-brand-500 rounded-full transition-all duration-300"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="text-[13px] font-semibold text-blue-500 mt-2">{pct}%</p>
+        <p className="text-[13px] font-semibold text-brand-500 mt-2">{pct}%</p>
       </div>
     </div>
   );
@@ -354,17 +354,17 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
 
   if (submitted) {
     return (
-      <div className={`min-h-screen flex flex-col items-center justify-center px-6 ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+      <div className={`min-h-screen flex flex-col items-center justify-center px-6 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-3xl p-8 shadow-sm w-full max-w-md text-center`}>
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-8 h-8 text-green-500" />
           </div>
-          <h2 className={`text-[20px] font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Оценка сохранена</h2>
+          <h2 className={`text-[20px] font-semibold mb-2 ${isDark ? 'text-white' : 'text-ink'}`}>Оценка сохранена</h2>
           <p className={`text-[15px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Данные и фотографии салона успешно переданы в систему</p>
           <button
             type="button"
             onClick={onSuccess}
-            className="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3.5 rounded-2xl transition-colors"
+            className="mt-6 w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3.5 rounded-2xl transition-colors"
           >
             На главную
           </button>
@@ -379,7 +379,7 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
         <UploadProgress done={uploadProgress.done} total={uploadProgress.total} />
       )}
 
-      <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+      <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
         {/* Header */}
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -391,13 +391,13 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
               <ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
             </button>
             <div className="flex-1 min-w-0">
-              <h1 className={`text-[17px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Новая оценка</h1>
+              <h1 className={`text-[17px] font-semibold ${isDark ? 'text-white' : 'text-ink'}`}>Новая оценка</h1>
             </div>
             <div className="flex items-center gap-1.5">
               <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
-              <div className="w-5 h-1.5 rounded-full bg-blue-500" />
+              <div className="w-5 h-1.5 rounded-full bg-brand-500" />
             </div>
           </div>
           <div className={`px-5 pb-2 text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>
@@ -462,7 +462,7 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
               onChange={e => setInteriorComment(e.target.value)}
               placeholder="Опишите состояние салона: чистота, износ, запах, особенности комплектации..."
               rows={4}
-              className={`w-full rounded-xl px-4 py-3 text-[14px] outline-none focus:ring-2 focus:ring-blue-400 resize-none transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-gray-900 placeholder-gray-400'}`}
+              className={`w-full rounded-xl px-4 py-3 text-[14px] outline-none focus:ring-2 focus:ring-brand-400 resize-none transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-ink placeholder-gray-400'}`}
             />
           </Section>
 
@@ -475,9 +475,9 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
 
           {/* Summary badge */}
           {countFiles() > 0 && (
-            <div className={`mb-3 px-4 py-3 rounded-2xl flex items-center gap-2.5 ${isDark ? 'bg-blue-900/30 border border-blue-800' : 'bg-blue-50 border border-blue-100'}`}>
-              <Camera className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-500'}`} />
-              <p className={`text-[13px] font-medium ${isDark ? 'text-blue-300' : 'text-blue-700'}`}>
+            <div className={`mb-3 px-4 py-3 rounded-2xl flex items-center gap-2.5 ${isDark ? 'bg-brand-900/30 border border-brand-800' : 'bg-brand-50 border border-brand-100'}`}>
+              <Camera className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-brand-400' : 'text-brand-500'}`} />
+              <p className={`text-[13px] font-medium ${isDark ? 'text-brand-300' : 'text-brand-700'}`}>
                 Выбрано фотографий: {countFiles()}
               </p>
             </div>
@@ -486,7 +486,7 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-60 text-white font-semibold text-[16px] py-4 rounded-2xl shadow-sm transition-all duration-150 active:scale-[0.98]"
+            className="w-full bg-brand-500 hover:bg-brand-600 active:bg-brand-700 disabled:opacity-60 text-white font-semibold text-[16px] py-4 rounded-2xl shadow-sm transition-all duration-150 active:scale-[0.98]"
           >
             {submitting ? 'Сохранение...' : 'Сохранить оценку'}
           </button>

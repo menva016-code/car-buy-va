@@ -1,5 +1,6 @@
 export type OwnershipType = 'individual' | 'reseller';
 export type SaleType = 'buyout' | 'trade_in';
+export type DealTimeline = 'today' | 'this_week' | 'this_month';
 export type TransmissionType = 'automatic' | 'manual' | 'robot' | 'cvt';
 export type DriveType = 'front' | 'rear' | 'all';
 export type FuelType = 'petrol' | 'diesel' | 'gas' | 'hybrid' | 'electric';
@@ -35,6 +36,12 @@ export const SALE_TYPE_LABELS: Record<SaleType, string> = {
   trade_in: 'Трейд-ин',
 };
 
+export const DEAL_TIMELINE_LABELS: Record<DealTimeline, string> = {
+  today: 'Сегодня',
+  this_week: 'Эта неделя',
+  this_month: 'Этот месяц',
+};
+
 export const MESSENGER_OPTIONS = [
   { value: 'max', label: 'MAX' },
   { value: 'telegram', label: 'Telegram' },
@@ -66,6 +73,8 @@ export interface AppraisalFormData {
   owner_phone: string;
   owner_messengers: string[];
   owner_messenger_phone: string;
+  owner_city: string;
+  deal_timeline: DealTimeline | null;
   ownership_type: OwnershipType;
   sale_type: SaleType;
   sale_reason: string;
@@ -179,6 +188,8 @@ export interface Appraisal {
   owner_phone: string;
   owner_messengers: string[] | null;
   owner_messenger_phone: string | null;
+  owner_city: string | null;
+  deal_timeline: DealTimeline | null;
   ownership_type: OwnershipType;
   sale_type: SaleType;
   sale_reason: string | null;

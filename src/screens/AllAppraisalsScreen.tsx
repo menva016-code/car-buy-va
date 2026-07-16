@@ -77,16 +77,16 @@ function Autocomplete<T extends { name: string; id: string }>({
     <div ref={ref} className="relative">
       <div className={`flex items-center rounded-xl border transition-all ${
         confirmed
-          ? isDark ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-300'
+          ? isDark ? 'bg-brand-900/30 border-brand-700' : 'bg-brand-50 border-brand-300'
           : isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
-      } ${open ? isDark ? 'ring-1 ring-blue-500' : 'ring-1 ring-blue-400' : ''}`}>
+      } ${open ? isDark ? 'ring-1 ring-brand-500' : 'ring-1 ring-brand-400' : ''}`}>
         <input
           type="text"
           value={value}
           onChange={e => { onType(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className={`flex-1 min-w-0 bg-transparent px-3 py-2.5 text-[14px] outline-none ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'}`}
+          className={`flex-1 min-w-0 bg-transparent px-3 py-2.5 text-[14px] outline-none ${isDark ? 'text-white placeholder-gray-500' : 'text-ink placeholder-gray-400'}`}
         />
         {loading && <Loader2 className={`w-3.5 h-3.5 mr-2.5 animate-spin flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
         {!loading && value && (
@@ -102,7 +102,7 @@ function Autocomplete<T extends { name: string; id: string }>({
           ) : suggestions.map(s => (
             <button key={s.id} type="button" onMouseDown={e => e.preventDefault()}
               onClick={() => { onSelect(s); setOpen(false); }}
-              className={`w-full text-left px-3.5 py-2.5 text-[14px] transition-colors border-b last:border-0 ${isDark ? 'text-gray-200 hover:bg-gray-700 border-gray-700' : 'text-gray-800 hover:bg-blue-50 border-gray-50'}`}>
+              className={`w-full text-left px-3.5 py-2.5 text-[14px] transition-colors border-b last:border-0 ${isDark ? 'text-gray-200 hover:bg-gray-700 border-gray-700' : 'text-gray-800 hover:bg-brand-50 border-gray-50'}`}>
               {s.name}
             </button>
           ))}
@@ -119,7 +119,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   return (
     <button type="button" onClick={onClick}
       className={`px-3 py-1.5 rounded-xl text-[13px] font-medium border transition-all ${
-        active ? 'bg-blue-500 text-white border-blue-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'
+        active ? 'bg-brand-500 text-white border-brand-500' : isDark ? 'bg-gray-700 text-gray-300 border-gray-600' : 'bg-white text-gray-600 border-gray-200'
       }`}>
       {label}
     </button>
@@ -294,13 +294,13 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
   const ac = activeCount(filters);
   const hasAny = ac > 0 || search.trim().length > 0;
 
-  const inputCls = `w-full rounded-xl px-3 py-2.5 text-[14px] outline-none focus:ring-1 focus:ring-blue-400 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-gray-900 placeholder-gray-400'}`;
+  const inputCls = `w-full rounded-xl px-3 py-2.5 text-[14px] outline-none focus:ring-1 focus:ring-brand-400 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-ink placeholder-gray-400'}`;
   const divCls = `border-b ${isDark ? 'border-gray-700' : 'border-gray-100'}`;
 
   return (
     <div className="flex flex-col flex-1">
       {/* Sticky search + filter controls */}
-      <div className={`sticky top-0 z-20 px-4 py-3 ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+      <div className={`sticky top-0 z-20 px-4 py-3 ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
         <div className={`flex items-center gap-2 rounded-2xl px-3.5 py-2.5 mb-2.5 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
           <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
           <input
@@ -316,12 +316,12 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
         <div className="flex items-center gap-2">
           <button onClick={() => setShowFilters(v => !v)}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-colors shadow-sm ${
-              showFilters || ac > 0 ? 'bg-blue-500 text-white' : isDark ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
+              showFilters || ac > 0 ? 'bg-brand-500 text-white' : isDark ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'
             }`}>
             <SlidersHorizontal className="w-3.5 h-3.5" />
             Фильтры
             {ac > 0 && (
-              <span className={`w-4 h-4 rounded-full text-[11px] font-bold flex items-center justify-center ${showFilters ? 'bg-white text-blue-500' : 'bg-blue-400 text-white'}`}>{ac}</span>
+              <span className={`w-4 h-4 rounded-full text-[11px] font-bold flex items-center justify-center ${showFilters ? 'bg-white text-brand-500' : 'bg-brand-400 text-white'}`}>{ac}</span>
             )}
             {showFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
@@ -426,12 +426,13 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
       )}
 
       {/* Results */}
-      <div className="flex-1 px-4 pb-24 space-y-3 lg:space-y-0">
-        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3">
+      <div className="flex-1 px-4 pb-24 space-y-5">
         {loading ? (
-          [...Array(6)].map((_, i) => (
-            <div key={i} className={`rounded-2xl h-32 animate-pulse ${isDark ? 'bg-gray-800' : 'bg-white'}`} />
-          ))
+          <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className={`rounded-2xl h-32 animate-pulse ${isDark ? 'bg-gray-800' : 'bg-white'}`} />
+            ))}
+          </div>
         ) : appraisals.length === 0 ? (
           <div className={`rounded-2xl p-8 text-center shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
             <Search className={`w-8 h-8 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
@@ -439,20 +440,40 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
             <p className={`text-[13px] mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Попробуйте изменить параметры поиска</p>
           </div>
         ) : (
-          <>
-            {appraisals.map(a => (
-              <AppraisalCard key={a.id} appraisal={a} frontPhotoUrl={frontPhotos[a.id]} onOpen={onOpenDetail} onTogglePurchased={handleTogglePurchased}
-                onDelete={id => setAppraisals(prev => prev.filter(x => x.id !== id))} />
-            ))}
-            {hasMore && (
-              <button onClick={() => loadData(false)} disabled={loadingMore}
-                className={`w-full py-3.5 rounded-2xl text-[14px] font-medium transition-colors shadow-sm ${isDark ? 'bg-gray-800 text-gray-400 hover:text-white' : 'bg-white text-gray-500 hover:text-gray-800'}`}>
-                {loadingMore ? 'Загрузка...' : 'Загрузить ещё'}
-              </button>
-            )}
-          </>
+          (() => {
+            // Group appraisals by date (YYYY-MM-DD from created_at)
+            const groups: { date: string; items: Appraisal[] }[] = [];
+            for (const a of appraisals) {
+              const dateKey = a.created_at.slice(0, 10);
+              const last = groups[groups.length - 1];
+              if (last && last.date === dateKey) last.items.push(a);
+              else groups.push({ date: dateKey, items: [a] });
+            }
+            return groups.map(group => (
+              <div key={group.date} className="space-y-3">
+                <div className="flex items-center gap-3 pt-1">
+                  <h3 className={`text-[13px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {new Date(group.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </h3>
+                  <span className={`text-[12px] font-medium ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{group.items.length} {group.items.length === 1 ? 'оценка' : group.items.length < 5 ? 'оценки' : 'оценок'}</span>
+                  <div className={`flex-1 h-px ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
+                </div>
+                <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-3 lg:gap-3">
+                  {group.items.map(a => (
+                    <AppraisalCard key={a.id} appraisal={a} frontPhotoUrl={frontPhotos[a.id]} onOpen={onOpenDetail} onTogglePurchased={handleTogglePurchased}
+                      onDelete={id => setAppraisals(prev => prev.filter(x => x.id !== id))} />
+                  ))}
+                </div>
+              </div>
+            ));
+          })()
         )}
-        </div>
+        {hasMore && !loading && appraisals.length > 0 && (
+          <button onClick={() => loadData(false)} disabled={loadingMore}
+            className={`w-full py-3.5 rounded-2xl text-[14px] font-medium transition-colors shadow-sm ${isDark ? 'bg-gray-800 text-gray-400 hover:text-white' : 'bg-white text-gray-500 hover:text-gray-800'}`}>
+            {loadingMore ? 'Загрузка...' : 'Загрузить ещё'}
+          </button>
+        )}
       </div>
     </div>
   );

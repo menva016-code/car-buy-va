@@ -60,15 +60,15 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
   const capitalised = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
+    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Header */}
       <div className={`shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="max-w-md lg:max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+          <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
             <ClipboardList className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className={`text-[17px] font-semibold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>Оценка авто</h1>
+            <h1 className={`text-[17px] font-semibold leading-tight ${isDark ? 'text-white' : 'text-ink'}`}>Оценка авто</h1>
             <p className={`text-[12px] capitalize ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{capitalised}</p>
           </div>
           {tab === 'today' && (
@@ -89,7 +89,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-2.5 text-[14px] font-medium border-b-2 transition-colors ${
                 tab === t
-                  ? `border-blue-500 ${isDark ? 'text-blue-400' : 'text-blue-600'}`
+                  ? `border-brand-500 ${isDark ? 'text-brand-400' : 'text-brand-600'}`
                   : `border-transparent ${isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'}`
               }`}>
               {t === 'today' ? 'Сегодня' : 'Все оценки'}
@@ -126,7 +126,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
           <div className="flex gap-3 mb-4">
             <div className={`flex-1 rounded-2xl px-4 py-3 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Оценок сегодня</p>
-              <p className={`text-[26px] font-bold mt-0.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>{loading ? '—' : appraisals.length}</p>
+              <p className={`text-[26px] font-bold mt-0.5 ${isDark ? 'text-white' : 'text-ink'}`}>{loading ? '—' : appraisals.length}</p>
             </div>
             <div className={`flex-1 rounded-2xl px-4 py-3 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Выкуплено</p>
@@ -164,7 +164,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
       {/* FAB */}
       <div className="fixed bottom-6 right-0 left-0 flex justify-center pointer-events-none">
         <button onClick={hasDraft ? onNewAppraisal : onNewAppraisal}
-          className="pointer-events-auto flex items-center gap-2.5 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 active:scale-95 text-white font-semibold text-[15px] px-6 py-3.5 rounded-2xl shadow-lg transition-all duration-150">
+          className="pointer-events-auto flex items-center gap-2.5 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 active:scale-95 text-white font-semibold text-[15px] px-6 py-3.5 rounded-2xl shadow-lg transition-all duration-150">
           <Plus className="w-5 h-5" />
           Новая оценка
         </button>

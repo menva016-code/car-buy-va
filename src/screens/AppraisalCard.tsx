@@ -81,7 +81,7 @@ export function AppraisalCard({ appraisal, frontPhotoUrl, onOpen, onTogglePurcha
   if (power) specChips.push(power);
 
   return (
-    <div className={`w-full rounded-2xl shadow-sm border overflow-hidden ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+    <div className={`w-full rounded-2xl shadow-sm border overflow-hidden ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <button
         type="button"
         onClick={() => onOpen(appraisal.id)}
@@ -118,7 +118,7 @@ export function AppraisalCard({ appraisal, frontPhotoUrl, onOpen, onTogglePurcha
           {/* Title + toggle + chevron */}
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className={`text-[15px] font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</p>
+              <p className={`text-[15px] font-semibold truncate ${isDark ? 'text-white' : 'text-ink'}`}>{title}</p>
               {vin && (
                 <p className={`text-[12px] font-mono mt-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   {appraisal.vin ? `VIN: ${vin}` : vin}
@@ -162,7 +162,7 @@ export function AppraisalCard({ appraisal, frontPhotoUrl, onOpen, onTogglePurcha
             </div>
             <div>
               <p className={`text-[11px] font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Цена владельца</p>
-              <p className={`text-[14px] font-semibold mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{formatPrice(appraisal.owner_price)}</p>
+              <p className={`text-[14px] font-semibold mt-0.5 ${isDark ? 'text-brand-400' : 'text-brand-600'}`}>{formatPrice(appraisal.owner_price)}</p>
             </div>
             <div>
               <p className={`text-[11px] font-medium uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Цена выкупа</p>
