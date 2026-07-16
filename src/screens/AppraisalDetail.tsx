@@ -175,6 +175,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
 
   // price display state for edit forms
   const [purchasePriceDisplay, setPurchasePriceDisplay] = useState('');
+  const [salePriceDisplay, setSalePriceDisplay] = useState('');
   const [ownerPriceDisplay, setOwnerPriceDisplay] = useState('');
   const [costAmountDisplay, setCostAmountDisplay] = useState('');
 
@@ -230,6 +231,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     setSaveError(null);
     if (section === 'purchase') {
       setPurchasePriceDisplay(appraisal.purchase_price != null ? new Intl.NumberFormat('ru-RU').format(appraisal.purchase_price) : '');
+      setSalePriceDisplay(appraisal.sale_price != null ? new Intl.NumberFormat('ru-RU').format(appraisal.sale_price) : '');
     }
     if (section === 'vehicle') {
       setOwnerPriceDisplay(appraisal.owner_price != null ? new Intl.NumberFormat('ru-RU').format(appraisal.owner_price) : '');
@@ -260,7 +262,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     setSaving(true); setSaveError(null);
     let updatePayload: Partial<Appraisal>;
     if (editSection === 'purchase') {
-      updatePayload = { purchase_price: editData.purchase_price, is_purchased: editData.is_purchased };
+      updatePayload = { purchase_price: editData.purchase_price, is_purchased: editData.is_purchased, sale_price: editData.sale_price };
     } else if (editSection === 'owner') {
       updatePayload = {
         owner_name: editData.owner_name,
@@ -434,8 +436,8 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     lines.push(a.owner_price != null ? `${a.owner_price.toLocaleString('ru-RU')} ₽` : '—');
     lines.push(`🏷 Цена выкупа`);
     lines.push(a.purchase_price != null ? `${a.purchase_price.toLocaleString('ru-RU')} ₽` : '—');
-    lines.push(`📈 Стартовая цена продажи`);
-    lines.push('________________________');
+    lines.push(`📈 Стоимость продажи`);
+    lines.push(a.sale_price != null ? `${a.sale_price.toLocaleString('ru-RU')} ₽` : '—');
 
     return lines.join('\n');
   }
@@ -545,6 +547,21 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               />
             </div>
             <div className={`pb-3.5 mb-3.5 border-b ${divCls}`}>
+              <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Стоимость продажи (₽)</p>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={salePriceDisplay}
+                onChange={e => {
+                  const raw = e.target.value.replace(/\D/g, '');
+                  setSalePriceDisplay(raw ? new Intl.NumberFormat('ru-RU').format(Number(raw)) : '');
+                  setEdit('sale_price', raw ? parseFloat(raw) : null);
+                }}
+                placeholder="1 500 000"
+                className={inputCls}
+              />
+            </div>
+            <div className={`pb-3.5 mb-3.5 border-b ${divCls}`}>
               <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Статус выкупа</p>
               <ToggleGroup<'purchased' | 'not_purchased'>
                 value={ed.is_purchased ? 'purchased' : 'not_purchased'}
@@ -565,10 +582,14 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
       <div>
         <SectionHeader icon={<Check className="w-3.5 h-3.5 text-white" />} title="Условия выкупа" onEdit={() => startEdit('purchase')} />
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm overflow-hidden`}>
-          <div className="grid grid-cols-2 divide-x">
+          <div className="grid grid-cols-3 divide-x">
             <div className="px-4 py-3.5">
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Цена выкупа</p>
               <p className="text-[17px] font-bold mt-0.5 text-green-500">{fPrice(appraisal.purchase_price) ?? '—'}</p>
+            </div>
+            <div className="px-4 py-3.5">
+              <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Стоимость продажи</p>
+              <p className={`text-[17px] font-bold mt-0.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{fPrice(appraisal.sale_price) ?? '—'}</p>
             </div>
             <div className="px-4 py-3.5">
               <p className={`text-[11px] font-semibold uppercase tracking-wide ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Статус</p>
@@ -1292,6 +1313,78 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Interior photos */}
+            {((['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass','interior_dashboard','interior_console'] as const).some(s => urlsBySlot[s]?.length) || (urlsBySlot['interior_extras']?.length ?? 0) > 0 || (urlsBySlot['interior_defects']?.length ?? 0) > 0 || editingPhotos) && (
+              <div className="mb-5">
+                <p className={`text-[14px] font-semibold mb-3 px-1 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Салон</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass','interior_dashboard','interior_console'] as const).map(slot => (
+                    (urlsBySlot[slot]?.length || editingPhotos) && (
+                      <div key={slot}>
+                        <p className={`text-[11px] font-medium mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{
+                          {interior_driver:'Вод. дверь',interior_left_pass:'Лев. пасс.',interior_right_rear:'Прав. зад.',interior_front_pass:'Перед. пасс.',interior_dashboard:'Приборная',interior_console:'Консоль'}[slot]
+                        }</p>
+                        {(urlsBySlot[slot] ?? []).map(url => (
+                          <div key={url} className="relative mb-2">
+                            <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot[slot] ?? [], (urlsBySlot[slot] ?? []).map(() => 'Салон'), 0)} />
+                            {editingPhotos && <button type="button" onClick={() => handleDeletePhoto(slot, url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
+                          </div>
+                        ))}
+                        {editingPhotos && !(urlsBySlot[slot]?.length) && (
+                          <label className={`block aspect-square rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                            <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
+                            {uploadingPhoto === slot ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                          </label>
+                        )}
+                      </div>
+                    )
+                  ))}
+                </div>
+
+                {/* Interior extras */}
+                {((urlsBySlot['interior_extras']?.length ?? 0) > 0 || editingPhotos) && (
+                  <div className="mt-3">
+                    <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Доп. комплектация</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {(urlsBySlot['interior_extras'] ?? []).map((url, i) => (
+                        <div key={url} className="relative">
+                          <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['interior_extras'] ?? [], (urlsBySlot['interior_extras'] ?? []).map((_, j) => `Фото ${j + 1}`), i)} />
+                          {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('interior_extras', url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
+                        </div>
+                      ))}
+                      {editingPhotos && (
+                        <label className={`aspect-square rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_extras', f, true)); e.target.value = ''; }} />
+                          {uploadingPhoto === 'interior_extras' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Interior defects */}
+                {((urlsBySlot['interior_defects']?.length ?? 0) > 0 || editingPhotos) && (
+                  <div className="mt-3">
+                    <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Дефекты салона</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {(urlsBySlot['interior_defects'] ?? []).map((url, i) => (
+                        <div key={url} className="relative">
+                          <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['interior_defects'] ?? [], (urlsBySlot['interior_defects'] ?? []).map((_, j) => `Дефект ${j + 1}`), i)} />
+                          {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('interior_defects', url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
+                        </div>
+                      ))}
+                      {editingPhotos && (
+                        <label className={`aspect-square rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_defects', f, true)); e.target.value = ''; }} />
+                          {uploadingPhoto === 'interior_defects' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

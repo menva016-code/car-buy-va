@@ -1,0 +1,1 @@
+ALTER TABLE appraisals ADD COLUMN IF NOT EXISTS sale_price numeric DEFAULT NULL;

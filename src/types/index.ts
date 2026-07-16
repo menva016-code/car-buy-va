@@ -99,9 +99,16 @@ export type SinglePhotoSlot =
   | 'rear_light_right'
   | 'tire_specs'
   | 'tire_date'
-  | 'windshield';
+  | 'windshield'
+  | 'interior_driver'
+  | 'interior_left_pass'
+  | 'interior_right_rear'
+  | 'interior_front_pass'
+  | 'interior_dashboard'
+  | 'interior_console'
+  | 'interior_extras';
 
-export type MultiPhotoSlot = 'body_extra' | 'body_defects';
+export type MultiPhotoSlot = 'body_extra' | 'body_defects' | 'interior_extras' | 'interior_defects';
 
 export interface PhotoState {
   single: Record<SinglePhotoSlot, File | null>;
@@ -126,6 +133,8 @@ export const INITIAL_PHOTOS: PhotoState = {
   multi: {
     body_extra: [],
     body_defects: [],
+    interior_extras: [],
+    interior_defects: [],
   },
 };
 
@@ -161,6 +170,7 @@ export interface Appraisal {
   owner_price: number | null;
   purchase_price: number | null;
   is_purchased: boolean;
+  sale_price: number | null;
   car_condition_comment: string | null;
   car_condition_pdf_url: string | null;
   autoteka_url: string | null;

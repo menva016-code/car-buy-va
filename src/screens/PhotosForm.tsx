@@ -536,6 +536,32 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onSuccess }: Photos
             )}
           </Section>
 
+          {/* Interior photos */}
+          <Section title="Фотографии салона" icon={<Camera className="w-3.5 h-3.5 text-white" />}>
+            <div className="grid grid-cols-2 gap-2.5">
+              <SinglePhotoCard slot="interior_driver" file={photos.single.interior_driver} label="С водительской двери" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="interior_left_pass" file={photos.single.interior_left_pass} label="С левой пассажирской двери" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="interior_right_rear" file={photos.single.interior_right_rear} label="С правой задней двери" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="interior_front_pass" file={photos.single.interior_front_pass} label="С передней пассажирской стороны" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="interior_dashboard" file={photos.single.interior_dashboard} label="Приборная панель с пробегом" onSelect={setSingle} onRemove={removeSingle} />
+              <SinglePhotoCard slot="interior_console" file={photos.single.interior_console} label="Центральная консоль" onSelect={setSingle} onRemove={removeSingle} />
+            </div>
+            <SubLabel text="Дополнительные фото комплектации" />
+            <MultiPhotoGrid
+              slot="interior_extras"
+              files={photos.multi.interior_extras ?? []}
+              onAdd={addMulti}
+              onRemove={removeMulti}
+            />
+            <SubLabel text="Фото дефектов салона" />
+            <MultiPhotoGrid
+              slot="interior_defects"
+              files={photos.multi.interior_defects}
+              onAdd={addMulti}
+              onRemove={removeMulti}
+            />
+          </Section>
+
           {/* Condition */}
           <Section title="Состояние автомобиля" icon={<ClipboardList className="w-3.5 h-3.5 text-white" />}>
             <SubLabel text="Отчёт толщинометра (PDF)" />
