@@ -286,10 +286,11 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
             <div className="w-5 h-1.5 rounded-full bg-blue-500" />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
+            <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
           </div>
         </div>
         <div className={`px-5 pb-2 text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>
-          Шаг 1 из 3 — Информация о владельце
+          Шаг 1 из 4 — Информация о владельце
         </div>
       </div>
 

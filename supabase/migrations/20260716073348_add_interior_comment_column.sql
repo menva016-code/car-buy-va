@@ -1,0 +1,1 @@
+ALTER TABLE appraisals ADD COLUMN IF NOT EXISTS interior_comment text DEFAULT NULL;

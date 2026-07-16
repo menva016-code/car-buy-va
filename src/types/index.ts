@@ -105,10 +105,39 @@ export type SinglePhotoSlot =
   | 'interior_right_rear'
   | 'interior_front_pass'
   | 'interior_dashboard'
-  | 'interior_console'
-  | 'interior_extras';
+  | 'interior_console';
 
 export type MultiPhotoSlot = 'body_extra' | 'body_defects' | 'interior_extras' | 'interior_defects';
+
+export type InteriorSingleSlot =
+  | 'interior_driver'
+  | 'interior_left_pass'
+  | 'interior_right_rear'
+  | 'interior_front_pass'
+  | 'interior_dashboard'
+  | 'interior_console';
+
+export type InteriorMultiSlot = 'interior_extras' | 'interior_defects';
+
+export interface InteriorPhotoState {
+  single: Record<InteriorSingleSlot, File | null>;
+  multi: Record<InteriorMultiSlot, File[]>;
+}
+
+export const INITIAL_INTERIOR_PHOTOS: InteriorPhotoState = {
+  single: {
+    interior_driver: null,
+    interior_left_pass: null,
+    interior_right_rear: null,
+    interior_front_pass: null,
+    interior_dashboard: null,
+    interior_console: null,
+  },
+  multi: {
+    interior_extras: [],
+    interior_defects: [],
+  },
+};
 
 export interface PhotoState {
   single: Record<SinglePhotoSlot, File | null>;
@@ -133,8 +162,6 @@ export const INITIAL_PHOTOS: PhotoState = {
   multi: {
     body_extra: [],
     body_defects: [],
-    interior_extras: [],
-    interior_defects: [],
   },
 };
 
@@ -175,6 +202,7 @@ export interface Appraisal {
   car_condition_pdf_url: string | null;
   autoteka_url: string | null;
   autoteka_pdf_url: string | null;
+  interior_comment: string | null;
   presale_costs: PresaleCost[] | null;
   sts_photo_url: string | null;
   created_at: string;

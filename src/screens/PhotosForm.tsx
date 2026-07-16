@@ -18,6 +18,7 @@ interface PhotosFormProps {
   ownerData: AppraisalFormData;
   vehicleData: VehicleFormData;
   onBack: () => void;
+  onNext: (appraisalId: string) => void;
   onSuccess: () => void;
 }
 
@@ -207,7 +208,7 @@ function UploadProgress({ done, total }: UploadProgressProps) {
 
 // ---- Main component ----
 
-export function PhotosForm({ ownerData, vehicleData, onBack, onSuccess }: PhotosFormProps) {
+export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }: PhotosFormProps) {
   const { isDark } = useTheme();
   const [photos, setPhotos] = useState<PhotoState>(INITIAL_PHOTOS);
   const [conditionPdf, setConditionPdf] = useState<File | null>(null);
@@ -399,28 +400,7 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onSuccess }: Photos
 
     setSubmitting(false);
     setUploadProgress(null);
-    setSubmitted(true);
-  }
-
-  if (submitted) {
-    return (
-      <div className={`min-h-screen flex flex-col items-center justify-center px-6 ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-3xl p-8 shadow-sm w-full max-w-md text-center`}>
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-8 h-8 text-green-500" />
-          </div>
-          <h2 className={`text-[20px] font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Оценка сохранена</h2>
-          <p className={`text-[15px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Данные и фотографии успешно переданы в систему</p>
-          <button
-            type="button"
-            onClick={onSuccess}
-            className="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3.5 rounded-2xl transition-colors"
-          >
-            На главную
-          </button>
-        </div>
-      </div>
-    );
+    onNext(appraisalId);
   }
 
   return (
@@ -447,10 +427,11 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onSuccess }: Photos
               <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className="w-5 h-1.5 rounded-full bg-blue-500" />
+              <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
             </div>
           </div>
           <div className={`px-5 pb-2 text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>
-            Шаг 3 из 3 — Фотографии автомобиля
+            Шаг 3 из 4 — Фотографии кузова
           </div>
         </div>
 
@@ -536,31 +517,7 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onSuccess }: Photos
             )}
           </Section>
 
-          {/* Interior photos */}
-          <Section title="Фотографии салона" icon={<Camera className="w-3.5 h-3.5 text-white" />}>
-            <div className="grid grid-cols-2 gap-2.5">
-              <SinglePhotoCard slot="interior_driver" file={photos.single.interior_driver} label="С водительской двери" onSelect={setSingle} onRemove={removeSingle} />
-              <SinglePhotoCard slot="interior_left_pass" file={photos.single.interior_left_pass} label="С левой пассажирской двери" onSelect={setSingle} onRemove={removeSingle} />
-              <SinglePhotoCard slot="interior_right_rear" file={photos.single.interior_right_rear} label="С правой задней двери" onSelect={setSingle} onRemove={removeSingle} />
-              <SinglePhotoCard slot="interior_front_pass" file={photos.single.interior_front_pass} label="С передней пассажирской стороны" onSelect={setSingle} onRemove={removeSingle} />
-              <SinglePhotoCard slot="interior_dashboard" file={photos.single.interior_dashboard} label="Приборная панель с пробегом" onSelect={setSingle} onRemove={removeSingle} />
-              <SinglePhotoCard slot="interior_console" file={photos.single.interior_console} label="Центральная консоль" onSelect={setSingle} onRemove={removeSingle} />
-            </div>
-            <SubLabel text="Дополнительные фото комплектации" />
-            <MultiPhotoGrid
-              slot="interior_extras"
-              files={photos.multi.interior_extras ?? []}
-              onAdd={addMulti}
-              onRemove={removeMulti}
-            />
-            <SubLabel text="Фото дефектов салона" />
-            <MultiPhotoGrid
-              slot="interior_defects"
-              files={photos.multi.interior_defects}
-              onAdd={addMulti}
-              onRemove={removeMulti}
-            />
-          </Section>
+          {/* Interior photos moved to step 4 */}
 
           {/* Condition */}
           <Section title="Состояние автомобиля" icon={<ClipboardList className="w-3.5 h-3.5 text-white" />}>
@@ -652,7 +609,7 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onSuccess }: Photos
             disabled={submitting}
             className="w-full bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-60 text-white font-semibold text-[16px] py-4 rounded-2xl shadow-sm transition-all duration-150 active:scale-[0.98]"
           >
-            {submitting ? 'Сохранение...' : 'Сохранить оценку'}
+            {submitting ? 'Сохранение...' : 'Далее →'}
           </button>
         </form>
       </div>

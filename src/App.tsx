@@ -5,17 +5,18 @@ import { HomeScreen } from './screens/HomeScreen';
 import { AppraisalForm } from './screens/AppraisalForm';
 import { VehicleForm } from './screens/VehicleForm';
 import { PhotosForm } from './screens/PhotosForm';
+import { InteriorPhotosForm } from './screens/InteriorPhotosForm';
 import { AppraisalDetail } from './screens/AppraisalDetail';
 import type { AppraisalFormData, VehicleFormData } from './types';
 
-type Screen = 'home' | 'owner-info' | 'vehicle-info' | 'photos' | 'detail';
+type Screen = 'home' | 'owner-info' | 'vehicle-info' | 'photos' | 'interior-photos' | 'detail';
 
 const DRAFT_KEY = 'appraisal_draft';
 
 interface Draft {
   ownerData: AppraisalFormData;
   vehicleData: VehicleFormData | null;
-  step: 'owner-info' | 'vehicle-info' | 'photos';
+  step: 'owner-info' | 'vehicle-info' | 'photos' | 'interior-photos';
 }
 
 function saveDraft(ownerData: AppraisalFormData, vehicleData: VehicleFormData | null, step: Draft['step']) {
@@ -37,6 +38,7 @@ function AppInner() {
   const [screen, setScreen] = useState<Screen>('home');
   const [ownerData, setOwnerData] = useState<AppraisalFormData | null>(null);
   const [vehicleData, setVehicleData] = useState<VehicleFormData | null>(null);
+  const [appraisalId, setAppraisalId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [hasDraft, setHasDraft] = useState(() => !!loadDraft());
@@ -56,6 +58,7 @@ function AppInner() {
     } else {
       setOwnerData(null);
       setVehicleData(null);
+      setAppraisalId(null);
       setScreen('owner-info');
     }
   }
@@ -74,6 +77,14 @@ function AppInner() {
     saveDraft(ownerData!, data, 'photos');
     setHasDraft(true);
     setScreen('photos');
+  }
+
+  function handlePhotosNext(id: string) {
+    haptic();
+    setAppraisalId(id);
+    saveDraft(ownerData!, vehicleData, 'interior-photos');
+    setHasDraft(true);
+    setScreen('interior-photos');
   }
 
   function handleOpenDetail(id: string) {
@@ -100,12 +111,18 @@ function AppInner() {
     setScreen('vehicle-info');
   }
 
+  function handleBackToPhotos() {
+    haptic();
+    setScreen('photos');
+  }
+
   function handleSuccess() {
     tg?.HapticFeedback?.notificationOccurred('success');
     clearDraft();
     setHasDraft(false);
     setOwnerData(null);
     setVehicleData(null);
+    setAppraisalId(null);
     setRefreshKey((k) => k + 1);
     setScreen('home');
   }
@@ -137,6 +154,19 @@ function AppInner() {
         ownerData={ownerData}
         vehicleData={vehicleData}
         onBack={handleBackToVehicle}
+        onNext={handlePhotosNext}
+        onSuccess={handleSuccess}
+      />
+    );
+  }
+
+  if (screen === 'interior-photos' && ownerData && vehicleData) {
+    return (
+      <InteriorPhotosForm
+        ownerData={ownerData}
+        vehicleData={vehicleData}
+        appraisalId={appraisalId}
+        onBack={handleBackToPhotos}
         onSuccess={handleSuccess}
       />
     );

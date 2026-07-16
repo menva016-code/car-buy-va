@@ -3,7 +3,7 @@ import { ClipboardList, Plus, Sun, Moon, RefreshCw, FileEdit, X } from 'lucide-r
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../context/ThemeContext';
 import type { Appraisal } from '../types';
-import { AppraisalCard, togglePurchasedInDB } from './AppraisalCard';
+import { AppraisalCard, togglePurchasedInDB, fetchFrontPhotos } from './AppraisalCard';
 import { AllAppraisalsScreen } from './AllAppraisalsScreen';
 
 function todayRange() {
@@ -28,6 +28,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
   const { isDark, toggleTheme } = useTheme();
   const [tab, setTab] = useState<'today' | 'all'>('today');
   const [appraisals, setAppraisals] = useState<Appraisal[]>([]);
+  const [frontPhotos, setFrontPhotos] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const fetchToday = useCallback(async () => {
@@ -39,7 +40,11 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
       .gte('created_at', from)
       .lte('created_at', to)
       .order('created_at', { ascending: false });
-    if (!error && data) setAppraisals(data as Appraisal[]);
+    if (!error && data) {
+      setAppraisals(data as Appraisal[]);
+      const photos = await fetchFrontPhotos((data as Appraisal[]).map(a => a.id));
+      setFrontPhotos(photos);
+    }
     setLoading(false);
   }, []);
 
@@ -144,7 +149,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
           ) : (
             <div className="flex flex-col gap-3">
               {appraisals.map(a => (
-                <AppraisalCard key={a.id} appraisal={a} onOpen={onOpenDetail} onTogglePurchased={handleTogglePurchased}
+                <AppraisalCard key={a.id} appraisal={a} frontPhotoUrl={frontPhotos[a.id]} onOpen={onOpenDetail} onTogglePurchased={handleTogglePurchased}
                   onDelete={id => setAppraisals(prev => prev.filter(x => x.id !== id))} />
               ))}
             </div>

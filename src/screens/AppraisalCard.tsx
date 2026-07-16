@@ -38,16 +38,18 @@ function Spec({ label, value, highlight, green }: SpecProps) {
 
 export interface AppraisalCardProps {
   appraisal: Appraisal;
+  frontPhotoUrl?: string | null;
   onOpen: (id: string) => void;
   onTogglePurchased: (id: string, current: boolean) => void;
   onDelete?: (id: string) => void;
 }
 
-export function AppraisalCard({ appraisal, onOpen, onTogglePurchased, onDelete }: AppraisalCardProps) {
+export function AppraisalCard({ appraisal, frontPhotoUrl, onOpen, onTogglePurchased, onDelete }: AppraisalCardProps) {
   const { isDark } = useTheme();
   const [toggling, setToggling] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   async function handleToggle(e: React.MouseEvent) {
     e.stopPropagation();
@@ -77,6 +79,8 @@ export function AppraisalCard({ appraisal, onOpen, onTogglePurchased, onDelete }
 
   const title = [appraisal.make, appraisal.model, appraisal.year].filter(Boolean).join(' ') || 'Без названия';
   const transmission = appraisal.transmission ? TX[appraisal.transmission] : null;
+  const vin = appraisal.vin || appraisal.license_plate || null;
+  const showPhoto = frontPhotoUrl && !imgError;
 
   return (
     <div className={`w-full rounded-2xl shadow-sm border overflow-hidden ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
@@ -85,39 +89,59 @@ export function AppraisalCard({ appraisal, onOpen, onTogglePurchased, onDelete }
         onClick={() => onOpen(appraisal.id)}
         className="w-full text-left active:scale-[0.98] transition-transform duration-100"
       >
-        <div className={`px-4 py-3 border-b flex items-start justify-between gap-3 ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
-              <Car className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-            </div>
-            <div className="min-w-0">
-              <p className={`text-[15px] font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</p>
-              {appraisal.license_plate && (
-                <p className={`text-[12px] font-mono mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{appraisal.license_plate}</p>
-              )}
-            </div>
+        {/* Photo + Title row */}
+        <div className="flex">
+          {/* Front photo */}
+          <div className="relative w-[110px] flex-shrink-0 overflow-hidden">
+            {showPhoto ? (
+              <img
+                src={frontPhotoUrl!}
+                alt={title}
+                onError={() => setImgError(true)}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className={`absolute inset-0 flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <Car className={`w-7 h-7 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={handleToggle}
-              disabled={toggling}
-              className={`px-3 py-1 rounded-lg text-[12px] font-semibold transition-all ${
-                appraisal.is_purchased
-                  ? isDark ? 'bg-green-900/40 text-green-400' : 'bg-green-100 text-green-700'
-                  : isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-600'
-              } ${toggling ? 'opacity-50' : 'active:scale-95'}`}
-            >
-              {appraisal.is_purchased ? 'Выкуплен' : 'Не выкуплен'}
-            </button>
-            <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
-          </div>
-        </div>
 
-        <div className="px-4 py-3 grid grid-cols-2 gap-y-2.5 gap-x-4">
-          <Spec label="КПП" value={transmission} />
-          <Spec label="Пробег" value={formatMileage(appraisal.mileage)} />
-          <Spec label="Цена владельца" value={formatPrice(appraisal.owner_price)} highlight />
-          <Spec label="Цена выкупа" value={formatPrice(appraisal.purchase_price)} green />
+          {/* Title + specs */}
+          <div className="flex-1 min-w-0 px-3.5 py-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className={`text-[15px] font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</p>
+                {vin && (
+                  <p className={`text-[12px] font-mono mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {appraisal.vin ? `VIN: ${vin}` : vin}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={handleToggle}
+                  disabled={toggling}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap ${
+                    appraisal.is_purchased
+                      ? isDark ? 'bg-green-900/40 text-green-400' : 'bg-green-100 text-green-700'
+                      : isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-600'
+                  } ${toggling ? 'opacity-50' : 'active:scale-95'}`}
+                >
+                  {appraisal.is_purchased ? 'Выкуплен' : 'Не выкуплен'}
+                </button>
+                <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+              </div>
+            </div>
+
+            {/* Specs */}
+            <div className="grid grid-cols-2 gap-y-1.5 gap-x-3 mt-2.5">
+              <Spec label="КПП" value={transmission} />
+              <Spec label="Пробег" value={formatMileage(appraisal.mileage)} />
+              <Spec label="Цена владельца" value={formatPrice(appraisal.owner_price)} highlight />
+              <Spec label="Цена выкупа" value={formatPrice(appraisal.purchase_price)} green />
+            </div>
+          </div>
         </div>
       </button>
 
@@ -147,4 +171,23 @@ export function AppraisalCard({ appraisal, onOpen, onTogglePurchased, onDelete }
 export async function togglePurchasedInDB(id: string, current: boolean): Promise<boolean> {
   const { error } = await supabase.from('appraisals').update({ is_purchased: !current }).eq('id', id);
   return !error;
+}
+
+/**
+ * Batch-fetch the front photo URL for a list of appraisal IDs.
+ * Returns a map of appraisalId -> photo URL.
+ */
+export async function fetchFrontPhotos(appraisalIds: string[]): Promise<Record<string, string>> {
+  if (appraisalIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from('appraisal_photos')
+    .select('appraisal_id, url')
+    .in('appraisal_id', appraisalIds)
+    .eq('slot', 'front');
+  if (error || !data) return {};
+  const map: Record<string, string> = {};
+  for (const row of data) {
+    if (!map[row.appraisal_id]) map[row.appraisal_id] = row.url;
+  }
+  return map;
 }

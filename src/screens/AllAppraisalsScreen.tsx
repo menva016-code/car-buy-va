@@ -6,7 +6,7 @@ import { loadMarks, loadModels, filterMarks, filterModels } from '../lib/carsApi
 import { searchModels as staticSearchModels } from '../lib/carDatabase';
 import type { CarMark, CarModel } from '../lib/carsApi';
 import type { Appraisal, TransmissionType, DriveType, FuelType } from '../types';
-import { AppraisalCard, togglePurchasedInDB } from './AppraisalCard';
+import { AppraisalCard, togglePurchasedInDB, fetchFrontPhotos } from './AppraisalCard';
 
 const PAGE_SIZE = 15;
 
@@ -142,6 +142,7 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
 
   // Data
   const [appraisals, setAppraisals] = useState<Appraisal[]>([]);
+  const [frontPhotos, setFrontPhotos] = useState<Record<string, string>>({});
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -187,7 +188,10 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
       .order('created_at', { ascending: false });
 
     const s = search.trim();
-    if (s) q = q.or(`owner_name.ilike.%${s}%,owner_phone.ilike.%${s}%,make.ilike.%${s}%,model.ilike.%${s}%,license_plate.ilike.%${s}%,vin.ilike.%${s}%`);
+    if (s) {
+      const sNorm = s.replace(/\s+/g, '').toLowerCase();
+      q = q.or(`owner_name.ilike.%${s}%,owner_phone.ilike.%${s}%,make.ilike.%${s}%,model.ilike.%${s}%,vin.ilike.%${s}%,license_plate.ilike.%${s}%,license_plate_search.ilike.%${sNorm}%`);
+    }
 
     if (filters.makeName) q = q.ilike('make', filters.makeConfirmed ? filters.makeName : `%${filters.makeName}%`);
     if (filters.modelName) q = q.ilike('model', modelConfirmed ? filters.modelName : `%${filters.modelName}%`);
@@ -212,6 +216,9 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
       offsetRef.value = offset + data.length;
       setHasMore(data.length === PAGE_SIZE);
       if (reset && count !== null) setTotalCount(count);
+      // Fetch front photos for newly loaded items
+      const photos = await fetchFrontPhotos((data as Appraisal[]).map(a => a.id));
+      setFrontPhotos(prev => ({ ...prev, ...photos }));
     }
     if (reset) setLoading(false); else setLoadingMore(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -433,7 +440,7 @@ export function AllAppraisalsScreen({ onOpenDetail }: AllAppraisalsScreenProps) 
         ) : (
           <>
             {appraisals.map(a => (
-              <AppraisalCard key={a.id} appraisal={a} onOpen={onOpenDetail} onTogglePurchased={handleTogglePurchased}
+              <AppraisalCard key={a.id} appraisal={a} frontPhotoUrl={frontPhotos[a.id]} onOpen={onOpenDetail} onTogglePurchased={handleTogglePurchased}
                 onDelete={id => setAppraisals(prev => prev.filter(x => x.id !== id))} />
             ))}
             {hasMore && (

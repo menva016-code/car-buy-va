@@ -279,6 +279,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     } else if (editSection === 'condition') {
       updatePayload = {
         car_condition_comment: editData.car_condition_comment,
+        interior_comment: editData.interior_comment,
       };
     } else {
       updatePayload = {
@@ -417,8 +418,12 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     lines.push(`• Топливо: ${a.fuel_type ? FUEL_LABELS[a.fuel_type] : '—'}`);
     lines.push(SEP);
 
-    lines.push('📝 Комментарий');
+    lines.push('📝 Комментарий по состоянию');
     lines.push(a.car_condition_comment ?? '—');
+    lines.push(SEP);
+
+    lines.push('🪑 Комментарий по салону');
+    lines.push(a.interior_comment ?? '—');
     lines.push(SEP);
 
     lines.push('🛠 Предпродажная подготовка');
@@ -1316,75 +1321,121 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               </div>
             )}
 
-            {/* Interior photos */}
-            {((['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass','interior_dashboard','interior_console'] as const).some(s => urlsBySlot[s]?.length) || (urlsBySlot['interior_extras']?.length ?? 0) > 0 || (urlsBySlot['interior_defects']?.length ?? 0) > 0 || editingPhotos) && (
-              <div className="mb-5">
-                <p className={`text-[14px] font-semibold mb-3 px-1 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Салон</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass','interior_dashboard','interior_console'] as const).map(slot => (
-                    (urlsBySlot[slot]?.length || editingPhotos) && (
+            {/* Interior — door angles */}
+            {((['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass'] as const).some(s => urlsBySlot[s]?.length) || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Салон — ракурсы дверей</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass'] as const).map(slot => (
                       <div key={slot}>
-                        <p className={`text-[11px] font-medium mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{
-                          {interior_driver:'Вод. дверь',interior_left_pass:'Лев. пасс.',interior_right_rear:'Прав. зад.',interior_front_pass:'Перед. пасс.',interior_dashboard:'Приборная',interior_console:'Консоль'}[slot]
-                        }</p>
                         {(urlsBySlot[slot] ?? []).map(url => (
-                          <div key={url} className="relative mb-2">
-                            <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot[slot] ?? [], (urlsBySlot[slot] ?? []).map(() => 'Салон'), 0)} />
-                            {editingPhotos && <button type="button" onClick={() => handleDeletePhoto(slot, url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
+                          <div key={url} className="relative aspect-[4/3] mb-2">
+                            <PhotoTile url={url} caption={{interior_driver:'Водительская дверь',interior_left_pass:'Левая пассажирская',interior_right_rear:'Правая задняя',interior_front_pass:'Передняя пассажирская'}[slot]} onClick={() => { const all = ['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass'].flatMap(s => urlsBySlot[s]??[]); openLightbox(all, ['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass'].flatMap(s => (urlsBySlot[s]??[]).map(()=>({interior_driver:'Водительская дверь',interior_left_pass:'Левая пассажирская',interior_right_rear:'Правая задняя',interior_front_pass:'Передняя пассажирская'}[s]!))), all.indexOf(url)); }} />
+                            {editingPhotos && <button type="button" onClick={() => handleDeletePhoto(slot, url)} className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5 text-white" /></button>}
                           </div>
                         ))}
                         {editingPhotos && !(urlsBySlot[slot]?.length) && (
-                          <label className={`block aspect-square rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
-                            {uploadingPhoto === slot ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            <span className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{{interior_driver:'Водительская дверь',interior_left_pass:'Левая пассажирская',interior_right_rear:'Правая задняя',interior_front_pass:'Передняя пассажирская'}[slot]}</span>
                           </label>
                         )}
                       </div>
-                    )
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              </div>
+            )}
 
-                {/* Interior extras */}
-                {((urlsBySlot['interior_extras']?.length ?? 0) > 0 || editingPhotos) && (
-                  <div className="mt-3">
-                    <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Доп. комплектация</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {(urlsBySlot['interior_extras'] ?? []).map((url, i) => (
-                        <div key={url} className="relative">
-                          <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['interior_extras'] ?? [], (urlsBySlot['interior_extras'] ?? []).map((_, j) => `Фото ${j + 1}`), i)} />
-                          {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('interior_extras', url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
-                        </div>
-                      ))}
-                      {editingPhotos && (
-                        <label className={`aspect-square rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
-                          <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_extras', f, true)); e.target.value = ''; }} />
-                          {uploadingPhoto === 'interior_extras' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
-                        </label>
-                      )}
-                    </div>
+            {/* Interior — dashboard & console */}
+            {((['interior_dashboard','interior_console'] as const).some(s => urlsBySlot[s]?.length) || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Приборная панель и консоль</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['interior_dashboard','interior_console'] as const).map(slot => (
+                      <div key={slot}>
+                        {(urlsBySlot[slot] ?? []).map(url => (
+                          <div key={url} className="relative aspect-[4/3] mb-2">
+                            <PhotoTile url={url} caption={{interior_dashboard:'Приборная панель',interior_console:'Центральная консоль'}[slot]} onClick={() => openLightbox([url], [{interior_dashboard:'Приборная панель',interior_console:'Центральная консоль'}[slot]!], 0)} />
+                            {editingPhotos && <button type="button" onClick={() => handleDeletePhoto(slot, url)} className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5 text-white" /></button>}
+                          </div>
+                        ))}
+                        {editingPhotos && !(urlsBySlot[slot]?.length) && (
+                          <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                            <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleAddPhoto(slot, f, false); e.target.value = ''; }} />
+                            {uploadingPhoto === slot ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                            <span className={`text-[11px] text-center ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{{interior_dashboard:'Приборная панель',interior_console:'Центральная консоль'}[slot]}</span>
+                          </label>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              </div>
+            )}
 
-                {/* Interior defects */}
-                {((urlsBySlot['interior_defects']?.length ?? 0) > 0 || editingPhotos) && (
-                  <div className="mt-3">
-                    <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Дефекты салона</p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {(urlsBySlot['interior_defects'] ?? []).map((url, i) => (
-                        <div key={url} className="relative">
-                          <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['interior_defects'] ?? [], (urlsBySlot['interior_defects'] ?? []).map((_, j) => `Дефект ${j + 1}`), i)} />
-                          {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('interior_defects', url)} className="absolute top-1 right-1 w-5 h-5 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>}
-                        </div>
-                      ))}
-                      {editingPhotos && (
-                        <label className={`aspect-square rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
-                          <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_defects', f, true)); e.target.value = ''; }} />
-                          {uploadingPhoto === 'interior_defects' ? <Upload className={`w-4 h-4 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
-                        </label>
-                      )}
-                    </div>
+            {/* Interior extras */}
+            {((urlsBySlot['interior_extras']?.length ?? 0) > 0 || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Доп. комплектация салона</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(urlsBySlot['interior_extras'] ?? []).map((url, i) => (
+                      <div key={url} className="relative aspect-[4/3]">
+                        <PhotoTile url={url} caption={`Фото ${i + 1}`} onClick={() => openLightbox(urlsBySlot['interior_extras'] ?? [], (urlsBySlot['interior_extras'] ?? []).map((_, j) => `Фото ${j + 1}`), i)} />
+                        {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('interior_extras', url)} className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5 text-white" /></button>}
+                      </div>
+                    ))}
+                    {editingPhotos && (
+                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                        <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_extras', f, true)); e.target.value = ''; }} />
+                        {uploadingPhoto === 'interior_extras' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
+                      </label>
+                    )}
                   </div>
-                )}
+                </div>
+              </div>
+            )}
+
+            {/* Interior defects */}
+            {((urlsBySlot['interior_defects']?.length ?? 0) > 0 || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Дефекты салона</p>
+                <div className={cardCls}>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(urlsBySlot['interior_defects'] ?? []).map((url, i) => (
+                      <div key={url} className="relative aspect-[4/3]">
+                        <PhotoTile url={url} caption={`Дефект ${i + 1}`} onClick={() => openLightbox(urlsBySlot['interior_defects'] ?? [], (urlsBySlot['interior_defects'] ?? []).map((_, j) => `Дефект ${j + 1}`), i)} />
+                        {editingPhotos && <button type="button" onClick={() => handleDeletePhoto('interior_defects', url)} className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500/90 rounded-full flex items-center justify-center"><X className="w-3.5 h-3.5 text-white" /></button>}
+                      </div>
+                    ))}
+                    {editingPhotos && (
+                      <label className={`aspect-[4/3] flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${isDark ? 'border-gray-600 hover:border-blue-500' : 'border-gray-200 hover:border-blue-400'}`}>
+                        <input type="file" accept="image/*" multiple className="hidden" onChange={e => { const files = Array.from(e.target.files ?? []); files.forEach(f => handleAddPhoto('interior_defects', f, true)); e.target.value = ''; }} />
+                        {uploadingPhoto === 'interior_defects' ? <Upload className={`w-5 h-5 animate-pulse ${isDark ? 'text-blue-400' : 'text-blue-500'}`} /> : <Plus className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />}
+                        <span className={`text-[11px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Добавить</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Interior comment */}
+            {((appraisal.interior_comment && !editingPhotos) || editingPhotos) && (
+              <div className="mb-4">
+                <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Комментарии по салону</p>
+                <div className={cardCls}>
+                  {editingPhotos ? (
+                    <textarea value={editData.interior_comment ?? ''} onChange={e => setEdit('interior_comment', e.target.value || null)} placeholder="Опишите состояние салона..." rows={4} className={`${inputCls} resize-none`} />
+                  ) : (
+                    <p className={`text-[14px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{appraisal.interior_comment ?? '—'}</p>
+                  )}
+                </div>
               </div>
             )}
           </div>

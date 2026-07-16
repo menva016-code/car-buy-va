@@ -369,9 +369,10 @@ export function VehicleForm({ onBack, onNext, initial }: VehicleFormProps) {
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
             <div className="w-5 h-1.5 rounded-full bg-blue-500" />
             <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
+            <div className={`w-5 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
           </div>
         </div>
-        <div className={`px-5 pb-2 text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>Шаг 2 из 3 — Информация об автомобиле</div>
+        <div className={`px-5 pb-2 text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>Шаг 2 из 4 — Информация об автомобиле</div>
       </div>
 
       <form onSubmit={handleNext} className="flex-1 px-4 py-4 max-w-md mx-auto w-full pb-8">
