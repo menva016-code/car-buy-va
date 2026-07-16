@@ -3,7 +3,7 @@ import {
   ChevronLeft, ChevronRight, X, Phone, Car, User,
   AlertCircle, Camera, Pencil,
   Check, MessageCircle, ClipboardList, FileText, Wrench, Plus,
-  Trash2, ExternalLink, Link, Send, Upload,
+  Trash2, ExternalLink, Link, Send, Upload, Loader2,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../context/ThemeContext';
@@ -42,7 +42,6 @@ interface LightboxState { urls: string[]; captions: string[]; index: number; }
 
 function Lightbox({ state, onClose }: { state: LightboxState; onClose: () => void }) {
   const [index, setIndex] = useState(state.index);
-  const [sendingApproval, setSendingApproval] = useState(false);
   const canPrev = index > 0, canNext = index < state.urls.length - 1;
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -167,7 +166,6 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
   const [editSection, setEditSection] = useState<EditSection | null>(null);
   const [editData, setEditData] = useState<Appraisal | null>(null);
   const [saving, setSaving] = useState(false);
-  const [sendingApproval, setSendingApproval] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // edit UI state
@@ -190,6 +188,11 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
   // delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // approval sending
+  const [sendingApproval, setSendingApproval] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [approvalSent, setApprovalSent] = useState(false);
 
   // PDF re-upload state
   const [uploadingConditionPdf, setUploadingConditionPdf] = useState(false);
@@ -216,38 +219,6 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     setUrlsBySlot(slots);
     setLoading(false);
   }, [appraisalId]);
-  
-  const sendToApproval = async () => {
-  if (!appraisal) return;
-
-  try {
-    setSendingApproval(true);
-
-    const photos = Object.values(urlsBySlot).flat();
-
-    const { error } = await supabase.functions.invoke("send-approval", {
-      body: {
-        appraisal,
-        photos
-      }
-    });
-
-    if (error) throw error;
-
-    alert("Автомобиль успешно отправлен на согласование.");
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert("Ошибка при отправке в Telegram.");
-
-  } finally {
-
-    setSendingApproval(false);
-
-  }
-};
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -426,6 +397,94 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     }
   }
 
+  function buildApprovalMessage(a: Appraisal): string {
+    const SEP = '━━━━━━━━━━━━━━━━━━';
+    const lines: string[] = [];
+
+    lines.push(`🚗 ${a.make ?? '—'} ${a.model ?? '—'} (${a.year ?? '—'})`);
+    lines.push(`👤 Владелец: ${a.owner_name ?? '—'} ${formatPhone(a.owner_phone ?? '')}`);
+    lines.push(`💼 Тип продажи: ${a.sale_type ? SALE_TYPE_LABELS[a.sale_type] : '—'}`);
+    lines.push(`📍 Причина продажи: ${a.sale_reason ?? 'Не указана'}`);
+    lines.push(SEP);
+    lines.push('⚙️ Характеристики');
+    lines.push(`• Пробег: ${a.mileage != null ? `${a.mileage.toLocaleString('ru-RU')} км` : '—'}`);
+    lines.push(`• Двигатель: ${a.engine_volume ?? '—'} л`);
+    lines.push(`• Мощность: ${a.power_hp != null ? `${a.power_hp} л.с.` : '—'}`);
+    lines.push(`• КПП: ${a.transmission ? TRANSMISSION_LABELS[a.transmission] : '—'}`);
+    lines.push(`• Привод: ${a.drive_type ? DRIVE_LABELS[a.drive_type] : '—'}`);
+    lines.push(`• Топливо: ${a.fuel_type ? FUEL_LABELS[a.fuel_type] : '—'}`);
+    lines.push(SEP);
+
+    lines.push('📝 Комментарий');
+    lines.push(a.car_condition_comment ?? '—');
+    lines.push(SEP);
+
+    lines.push('🛠 Предпродажная подготовка');
+    const costs = a.presale_costs ?? [];
+    let total = 0;
+    for (const c of costs) {
+      lines.push(`• ${c.type} — ${c.cost.toLocaleString('ru-RU')} ₽`);
+      total += c.cost;
+    }
+    lines.push(`💰 Итого: ${total.toLocaleString('ru-RU')} ₽`);
+    lines.push(SEP);
+
+    lines.push('💵 Стоимость');
+    lines.push(`💬 Цена владельца`);
+    lines.push(a.owner_price != null ? `${a.owner_price.toLocaleString('ru-RU')} ₽` : '—');
+    lines.push(`🏷 Цена выкупа`);
+    lines.push(a.purchase_price != null ? `${a.purchase_price.toLocaleString('ru-RU')} ₽` : '—');
+    lines.push(`📈 Стартовая цена продажи`);
+    lines.push('________________________');
+
+    return lines.join('\n');
+  }
+
+  async function handleSendApproval() {
+    if (!appraisal) return;
+    setSendingApproval(true);
+    setApprovalError(null);
+
+    try {
+      // Collect all photo URLs
+      const photoUrls: string[] = [];
+      if (appraisal.sts_photo_url) photoUrls.push(appraisal.sts_photo_url);
+      for (const slot of Object.keys(urlsBySlot)) {
+        if (slot === 'sts') continue;
+        for (const url of urlsBySlot[slot] ?? []) photoUrls.push(url);
+      }
+
+      const message = buildApprovalMessage(appraisal);
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-approval`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          appraisalId,
+          message,
+          photos: photoUrls.map((url) => ({ url })),
+          conditionPdfUrl: appraisal.car_condition_pdf_url,
+          autotekaPdfUrl: appraisal.autoteka_pdf_url,
+          autotekaUrl: appraisal.autoteka_url,
+        }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error ?? `HTTP ${res.status}`);
+      }
+
+      setApprovalSent(true);
+    } catch (err) {
+      setApprovalError(err instanceof Error ? err.message : 'Ошибка отправки');
+    } finally {
+      setSendingApproval(false);
+    }
+  }
+
   const cardCls = `${isDark ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-sm p-4`;
   const divCls = `border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`;
   const inputCls = `w-full rounded-xl px-4 py-3 text-[15px] outline-none focus:ring-2 focus:ring-blue-400 transition-all ${isDark ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-50 text-gray-900 placeholder-gray-400'}`;
@@ -435,28 +494,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
       <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
-            <button
-  type="button"
-  onClick={handleSendApproval}
-  disabled={
-    sendingApproval ||
-    appraisal?.approval_status === "sent"
-  }
-  className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all ${
-    isDark
-      ? "bg-blue-900/30 border border-blue-700/60 text-blue-400"
-      : "bg-blue-50 border border-blue-200 text-blue-600"
-  }`}
->
-  <Send className="w-4 h-4" />
-
-  {sendingApproval
-    ? "Отправка..."
-    : appraisal?.approval_status === "sent"
-      ? "✓ Отправлено"
-      : "Отправить на согласование"}
-
-</button>
+            <button onClick={onBack} className={`w-9 h-9 flex items-center justify-center rounded-xl ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}><ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} /></button>
           </div>
         </div>
         <div className="px-4 py-4 max-w-md mx-auto space-y-3">
@@ -467,39 +505,6 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
   }
 
   if (!appraisal) {
-	  
-	const handleSendApproval = async () => {
-  if (!appraisal) return;
-
-  try {
-    setSendingApproval(true);
-
-    const { error } = await supabase.functions.invoke(
-      "send-approval",
-      {
-        body: {
-          appraisalId: appraisal.id,
-        },
-      }
-    );
-
-    if (error) throw error;
-
-    alert("Автомобиль успешно отправлен на согласование.");
-
-    fetchData();
-
-  } catch (err: any) {
-
-    alert(err.message ?? "Ошибка отправки");
-
-  } finally {
-
-    setSendingApproval(false);
-
-  }
-};  
-	  
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         <div className="text-center px-6">
@@ -901,22 +906,20 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           </div>
 
           {/* Approval button */}
-        <button
-			type="button"
-			onClick={sendToApproval}
-			disabled={sendingApproval}
-			className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all ${
-				isDark
-					? "bg-blue-900/30 border border-blue-700/60 text-blue-400 hover:bg-blue-900/50"
-					: "bg-blue-50 border border-blue-200 text-blue-600 hover:bg-blue-100"
-			} ${sendingApproval ? "opacity-60 cursor-not-allowed" : ""}`}
-		>
-			<Send className="w-4 h-4" />
-
-			{sendingApproval
-				? "Отправка..."
-				: "Отправить на согласование"}
-		</button>
+          {approvalSent ? (
+            <div className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] ${isDark ? 'bg-green-900/30 border border-green-700/60 text-green-400' : 'bg-green-50 border border-green-200 text-green-600'}`}>
+              <Check className="w-4 h-4" />Отправлено в Telegram
+            </div>
+          ) : (
+            <button type="button" onClick={handleSendApproval} disabled={sendingApproval}
+              className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-semibold text-[15px] transition-all disabled:opacity-60 ${isDark ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-blue-500 text-white hover:bg-blue-600'}`}>
+              {sendingApproval ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {sendingApproval ? 'Отправка...' : 'Отправить на согласование'}
+            </button>
+          )}
+          {approvalError && (
+            <p className={`text-[13px] text-center ${isDark ? 'text-red-400' : 'text-red-500'}`}>{approvalError}</p>
+          )}
 
           {renderPurchaseSection()}
           {renderOwnerSection()}
