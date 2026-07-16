@@ -500,11 +500,11 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
     return (
       <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button onClick={onBack} className={`w-9 h-9 flex items-center justify-center rounded-xl ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}><ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} /></button>
           </div>
         </div>
-        <div className="px-4 py-4 max-w-md mx-auto space-y-3">
+        <div className="px-4 py-4 max-w-md lg:max-w-2xl mx-auto space-y-3">
           {[80, 120, 200, 160].map((h, i) => <div key={i} className={`rounded-2xl animate-pulse ${isDark ? 'bg-gray-800' : 'bg-white'}`} style={{ height: h }} />)}
         </div>
       </div>
@@ -870,7 +870,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
       <div>
         <SectionHeader icon={<Car className="w-3.5 h-3.5 text-white" />} title="Характеристики" onEdit={() => startEdit('vehicle')} />
         <div className={cardCls}>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3.5">
             <InfoRow label="VIN" value={appraisal.vin} mono />
             <InfoRow label="ГРЗ" value={appraisal.license_plate} mono />
             <InfoRow label="Объём двигателя" value={appraisal.engine_volume} />
@@ -893,7 +893,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
       <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         {/* Header */}
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button onClick={onBack} className={`w-9 h-9 flex items-center justify-center rounded-xl flex-shrink-0 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}>
               <ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
             </button>
@@ -904,7 +904,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
           </div>
         </div>
 
-        <div className="flex-1 px-4 py-4 max-w-md mx-auto w-full pb-10 space-y-4">
+        <div className="flex-1 px-4 py-4 max-w-md lg:max-w-2xl mx-auto w-full pb-10 space-y-4">
 
           {/* Hero */}
           <div className={cardCls}>
@@ -1123,7 +1123,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Документы</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {(urlsBySlot['sts'] ?? []).map(url => (
                       <div key={url} className="relative aspect-[4/3]">
                         <PhotoTile url={url} caption="Фото СТС" onClick={() => openLightbox([url], ['Фото СТС'], 0)} />
@@ -1149,7 +1149,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Кузов — основные ракурсы</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {(['front','left','rear','right'] as const).map(slot => (
                       <div key={slot}>
                         {(urlsBySlot[slot] ?? []).map(url => (
@@ -1198,7 +1198,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
                     ))}
                   </div>
                   <SubLabel text="Задняя оптика" />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {(['rear_light_left','rear_light_right'] as const).map(slot => (
                       <div key={slot}>
                         {(urlsBySlot[slot] ?? []).map(url => (
@@ -1226,7 +1226,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Резина</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {(['tire_specs','tire_date'] as const).map(slot => (
                       <div key={slot}>
                         {(urlsBySlot[slot] ?? []).map(url => (
@@ -1254,7 +1254,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Лобовое стекло</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {(urlsBySlot['windshield'] ?? []).map(url => (
                       <div key={url} className="relative aspect-[4/3]">
                         <PhotoTile url={url} caption="Маркировка стекла" onClick={() => openLightbox([url],['Маркировка стекла'],0)} />
@@ -1278,7 +1278,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Дополнительные фото кузова</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
                     {(urlsBySlot['body_extra'] ?? []).map((url, i) => (
                       <div key={url} className="relative aspect-square">
                         <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['body_extra']??[], (urlsBySlot['body_extra']??[]).map((_,j)=>`Фото ${j+1}`), i)} />
@@ -1302,7 +1302,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Дефекты кузова</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
                     {(urlsBySlot['body_defects'] ?? []).map((url, i) => (
                       <div key={url} className="relative aspect-square">
                         <PhotoTile url={url} size="sm" onClick={() => openLightbox(urlsBySlot['body_defects']??[], (urlsBySlot['body_defects']??[]).map((_,j)=>`Дефект ${j+1}`), i)} />
@@ -1326,7 +1326,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Салон — ракурсы дверей</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {(['interior_driver','interior_left_pass','interior_right_rear','interior_front_pass'] as const).map(slot => (
                       <div key={slot}>
                         {(urlsBySlot[slot] ?? []).map(url => (
@@ -1354,7 +1354,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Приборная панель и консоль</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                     {(['interior_dashboard','interior_console'] as const).map(slot => (
                       <div key={slot}>
                         {(urlsBySlot[slot] ?? []).map(url => (
@@ -1382,7 +1382,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Доп. комплектация салона</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
                     {(urlsBySlot['interior_extras'] ?? []).map((url, i) => (
                       <div key={url} className="relative aspect-[4/3]">
                         <PhotoTile url={url} caption={`Фото ${i + 1}`} onClick={() => openLightbox(urlsBySlot['interior_extras'] ?? [], (urlsBySlot['interior_extras'] ?? []).map((_, j) => `Фото ${j + 1}`), i)} />
@@ -1406,7 +1406,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
               <div className="mb-4">
                 <p className={`text-[12px] font-semibold uppercase tracking-wide mb-2 px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Дефекты салона</p>
                 <div className={cardCls}>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
                     {(urlsBySlot['interior_defects'] ?? []).map((url, i) => (
                       <div key={url} className="relative aspect-[4/3]">
                         <PhotoTile url={url} caption={`Дефект ${i + 1}`} onClick={() => openLightbox(urlsBySlot['interior_defects'] ?? [], (urlsBySlot['interior_defects'] ?? []).map((_, j) => `Дефект ${j + 1}`), i)} />
@@ -1452,7 +1452,7 @@ export function AppraisalDetail({ appraisalId, onBack, onDelete }: AppraisalDeta
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center px-4 pb-8">
-          <div className={`w-full max-w-md rounded-3xl p-6 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+          <div className={`w-full max-w-md lg:max-w-md rounded-3xl p-6 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6 text-red-500" />
             </div>

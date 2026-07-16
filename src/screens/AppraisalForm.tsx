@@ -274,7 +274,7 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
     <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
       {/* Header */}
       <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button type="button" onClick={onBack}
             className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}>
             <ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
@@ -294,7 +294,7 @@ export function AppraisalForm({ onBack, onNext, initial }: AppraisalFormProps) {
         </div>
       </div>
 
-      <form onSubmit={handleNext} className="flex-1 px-4 py-4 max-w-md mx-auto w-full pb-8">
+      <form onSubmit={handleNext} className="flex-1 px-4 py-4 max-w-md lg:max-w-2xl mx-auto w-full pb-8">
 
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-3 px-1">

@@ -358,7 +358,7 @@ export function VehicleForm({ onBack, onNext, initial }: VehicleFormProps) {
   return (
     <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
       <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button type="button" onClick={onBack} className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} -ml-1`}>
             <ChevronLeft className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
           </button>
@@ -375,7 +375,7 @@ export function VehicleForm({ onBack, onNext, initial }: VehicleFormProps) {
         <div className={`px-5 pb-2 text-[12px] ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>Шаг 2 из 4 — Информация об автомобиле</div>
       </div>
 
-      <form onSubmit={handleNext} className="flex-1 px-4 py-4 max-w-md mx-auto w-full pb-8">
+      <form onSubmit={handleNext} className="flex-1 px-4 py-4 max-w-md lg:max-w-2xl mx-auto w-full pb-8">
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-3 px-1">
             <div className="w-6 h-6 bg-blue-500 rounded-md flex items-center justify-center"><Car className="w-3.5 h-3.5 text-white" /></div>

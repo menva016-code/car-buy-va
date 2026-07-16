@@ -412,7 +412,7 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }
       <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         {/* Header */}
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button
               type="button"
               onClick={onBack}
@@ -435,11 +435,11 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 px-4 py-4 max-w-md mx-auto w-full pb-8">
+        <form onSubmit={handleSubmit} className="flex-1 px-4 py-4 max-w-md lg:max-w-2xl mx-auto w-full pb-8">
 
           {/* Documents */}
           <Section title="Документы" icon={<FileImage className="w-3.5 h-3.5 text-white" />}>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <SinglePhotoCard slot="sts" file={photos.single.sts} label="Фото СТС" onSelect={setSingle} onRemove={removeSingle} />
               <div className={`aspect-square rounded-xl flex items-center justify-center ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
                 <span className={`text-[11px] text-center px-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Слот для документа</span>
@@ -449,7 +449,7 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }
 
           {/* Exterior */}
           <Section title="Кузов — основные ракурсы" icon={<Car className="w-3.5 h-3.5 text-white" />}>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <SinglePhotoCard slot="front" file={photos.single.front} label="Передняя часть" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="left" file={photos.single.left} label="Левая сторона" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="rear" file={photos.single.rear} label="Задняя часть" onSelect={setSingle} onRemove={removeSingle} />
@@ -460,12 +460,12 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }
           {/* Optics */}
           <Section title="Оптика" icon={<Zap className="w-3.5 h-3.5 text-white" />}>
             <SubLabel text="Передняя оптика" />
-            <div className="grid grid-cols-2 gap-2.5 mb-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mb-4">
               <SinglePhotoCard slot="front_light_left" file={photos.single.front_light_left} label="Левая" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="front_light_right" file={photos.single.front_light_right} label="Правая" onSelect={setSingle} onRemove={removeSingle} />
             </div>
             <SubLabel text="Задняя оптика" />
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <SinglePhotoCard slot="rear_light_left" file={photos.single.rear_light_left} label="Левая" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="rear_light_right" file={photos.single.rear_light_right} label="Правая" onSelect={setSingle} onRemove={removeSingle} />
             </div>
@@ -473,7 +473,7 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }
 
           {/* Tires */}
           <Section title="Резина" icon={<CircleDot className="w-3.5 h-3.5 text-white" />}>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <SinglePhotoCard slot="tire_specs" file={photos.single.tire_specs} label="Параметры резины" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="tire_date" file={photos.single.tire_date} label="Дата выпуска" onSelect={setSingle} onRemove={removeSingle} />
             </div>
@@ -481,7 +481,7 @@ export function PhotosForm({ ownerData, vehicleData, onBack, onNext, onSuccess }
 
           {/* Windshield */}
           <Section title="Лобовое стекло" icon={<Eye className="w-3.5 h-3.5 text-white" />}>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <SinglePhotoCard slot="windshield" file={photos.single.windshield} label="Маркировка стекла" onSelect={setSingle} onRemove={removeSingle} />
               <div className={`aspect-square rounded-xl flex items-center justify-center ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`} />
             </div>

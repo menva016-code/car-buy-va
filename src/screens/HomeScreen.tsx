@@ -63,7 +63,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
     <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
       {/* Header */}
       <div className={`shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-        <div className="max-w-md mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="max-w-md lg:max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
             <ClipboardList className="w-5 h-5 text-white" />
           </div>
@@ -84,7 +84,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
         </div>
 
         {/* Tabs */}
-        <div className="max-w-md mx-auto px-4 pb-0 flex">
+        <div className="max-w-md lg:max-w-5xl mx-auto px-4 pb-0 flex">
           {(['today', 'all'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-2.5 text-[14px] font-medium border-b-2 transition-colors ${
@@ -100,7 +100,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
 
       {/* Draft banner */}
       {hasDraft && (
-        <div className="max-w-md mx-auto w-full px-4 pt-3">
+        <div className="max-w-md lg:max-w-5xl mx-auto w-full px-4 pt-3">
           <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 shadow-sm ${isDark ? 'bg-amber-900/30 border border-amber-700/50' : 'bg-amber-50 border border-amber-200'}`}>
             <FileEdit className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
             <div className="flex-1 min-w-0">
@@ -121,7 +121,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
 
       {/* Content */}
       {tab === 'today' ? (
-        <div className="flex-1 px-4 py-4 max-w-md mx-auto w-full pb-24">
+        <div className="flex-1 px-4 py-4 max-w-md lg:max-w-5xl mx-auto w-full pb-24">
           {/* Stats */}
           <div className="flex gap-3 mb-4">
             <div className={`flex-1 rounded-2xl px-4 py-3 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow-sm`}>
@@ -147,7 +147,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
               <p className={`text-[13px] mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Нажмите «+» чтобы создать первую оценку за сегодня</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-3">
               {appraisals.map(a => (
                 <AppraisalCard key={a.id} appraisal={a} frontPhotoUrl={frontPhotos[a.id]} onOpen={onOpenDetail} onTogglePurchased={handleTogglePurchased}
                   onDelete={id => setAppraisals(prev => prev.filter(x => x.id !== id))} />
@@ -156,7 +156,7 @@ export function HomeScreen({ onNewAppraisal, onOpenDetail, refreshKey, hasDraft,
           )}
         </div>
       ) : (
-        <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
+        <div className="flex-1 flex flex-col max-w-md lg:max-w-5xl mx-auto w-full">
           <AllAppraisalsScreen onOpenDetail={onOpenDetail} />
         </div>
       )}

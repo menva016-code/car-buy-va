@@ -382,7 +382,7 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
       <div className={`min-h-screen flex flex-col ${isDark ? 'bg-gray-900' : 'bg-[#f0f2f5]'}`}>
         {/* Header */}
         <div className={`sticky top-0 z-10 shadow-sm ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="max-w-md lg:max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button
               type="button"
               onClick={onBack}
@@ -405,11 +405,11 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 px-4 py-4 max-w-md mx-auto w-full pb-8">
+        <form onSubmit={handleSubmit} className="flex-1 px-4 py-4 max-w-md lg:max-w-2xl mx-auto w-full pb-8">
 
           {/* Interior — door angles */}
           <Section title="Салон — ракурсы дверей" icon={<Armchair className="w-3.5 h-3.5 text-white" />}>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <SinglePhotoCard slot="interior_driver" file={photos.single.interior_driver} label="С водительской двери" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="interior_left_pass" file={photos.single.interior_left_pass} label="С левой пассажирской двери" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="interior_right_rear" file={photos.single.interior_right_rear} label="С правой задней двери" onSelect={setSingle} onRemove={removeSingle} />
@@ -419,7 +419,7 @@ export function InteriorPhotosForm({ ownerData, vehicleData, appraisalId: existi
 
           {/* Interior — dashboard & console */}
           <Section title="Приборная панель и консоль" icon={<Gauge className="w-3.5 h-3.5 text-white" />}>
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5">
               <SinglePhotoCard slot="interior_dashboard" file={photos.single.interior_dashboard} label="Приборная панель с пробегом" onSelect={setSingle} onRemove={removeSingle} />
               <SinglePhotoCard slot="interior_console" file={photos.single.interior_console} label="Центральная консоль" onSelect={setSingle} onRemove={removeSingle} />
             </div>
